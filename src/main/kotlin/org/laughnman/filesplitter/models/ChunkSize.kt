@@ -11,7 +11,7 @@ fun String.toChunkSize(): ChunkSize {
 
 	return regex.matchEntire(this)
 		?.let { ChunkSize(it.groupValues[1].toLong(), ChunkSizeUnit.valueOf(it.groupValues[2].takeUnless { it.isEmpty() } ?: "B")) }
-		?: throw RuntimeException("$this did not match the format of ")
+		?: throw RuntimeException("$this did not match the expected format of <numeric size>B|KB|MB|GB|TB.")
 }
 
 fun Long.toChunkSize(unit: ChunkSizeUnit = ChunkSizeUnit.B) = ChunkSize(this, unit)

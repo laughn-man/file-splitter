@@ -15,6 +15,7 @@ dependencies {
 	implementation(kotlin("stdlib"))
 
 	implementation("io.insert-koin:koin-core:$koinVersion")
-	implementation("io.ktor:ktor-client-cio:1.6.4")
 	implementation("info.picocli:picocli:4.6.1")
+	implementation("ch.qos.logback:logback-classic:1.2.6")
+
 }
