@@ -47,6 +47,9 @@ class FileSplitterServiceImpl : FileSplitterService {
 		if (!file.isFile) {
 			throw RuntimeException("$file must be a file.")
 		}
+		if (file.length() <= splitCommand.chunkSize.toBytes()) {
+			throw RuntimeException("$file length of ${file.length()} is less than or equal to chunk size. Nothing to split.")
+		}
 
 		// Open the file to split.
 		file.inputStream().use { fin ->
@@ -61,10 +64,11 @@ class FileSplitterServiceImpl : FileSplitterService {
 				logger.debug("Remaining bytes: ${totalBytesCopied}.")
 				// Generate the chunk file name.
 				val outputFile = File(parentDirectory, "%s_%0${INDEX_PADDING}d".format(file.name, index))
+				logger.info("Creating chunk file $outputFile")
 				// Open the chunk file for output.
 				outputFile.outputStream().use { fout ->
-					logger.debug("Opened file $outputFile for output.")
 					totalBytesCopied += copyFileChunk(fin, fout, splitCommand.chunkSize)
+					logger.info("$totalBytesCopied bytes written.")
 				}
 				index++
 			}
@@ -87,7 +91,7 @@ class FileSplitterServiceImpl : FileSplitterService {
 		File(combineCommand.rootDir.toFile(), combineCommand.destinationName).outputStream().use { fout ->
 			Files.newDirectoryStream(combineCommand.rootDir, combineCommand.chunkPattern).use { dirStream ->
 				dirStream.sorted().map { it.toFile() }.forEach { file ->
-					logger.debug("Copying $file")
+					logger.info("Combining file $file")
 					file.inputStream().use { fin ->
 						copyFileChunk(fin, fout, ChunkSize(file.length()))
 					}
