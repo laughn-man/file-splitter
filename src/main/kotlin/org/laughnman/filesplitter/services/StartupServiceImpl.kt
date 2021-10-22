@@ -23,7 +23,7 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService) :
 	}
 
 	override fun run(args: Array<String>) {
-		logger.info { "Starting File Splitter." }
+		logger.info { "Starting Universal Transfer." }
 
 		exitProcess(CommandLine(MainCommand(FunctionalCommand::noOp))
 			.addSubcommand(SplitCommand(this::runSplit))

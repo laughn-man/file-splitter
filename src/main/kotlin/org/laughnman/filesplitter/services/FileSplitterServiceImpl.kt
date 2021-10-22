@@ -58,14 +58,13 @@ class FileSplitterServiceImpl : FileSplitterService {
 
 			// Loop until all the bytes have been copied.
 			while (totalBytesCopied < file.length()) {
-				logger.debug { "Remaining bytes: ${totalBytesCopied}." }
 				// Generate the chunk file name.
 				val outputFile = File(parentDirectory, "%s_%0${INDEX_PADDING}d".format(file.name, index))
 				logger.info { "Creating chunk file $outputFile" }
 				// Open the chunk file for output.
 				outputFile.outputStream().use { fout ->
 					totalBytesCopied += copyFileChunk(fin, fout, splitCommand.chunkSize)
-					logger.info {"$totalBytesCopied bytes written." }
+					logger.info {"$totalBytesCopied total bytes written." }
 				}
 				index++
 			}
