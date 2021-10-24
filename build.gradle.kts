@@ -10,6 +10,7 @@ group = "org.laughnman"
 version = "0.1.1"
 
 val koinVersion = "3.1.2"
+val kotestVersion = "4.6.3"
 
 repositories {
 	mavenCentral()
@@ -17,12 +18,14 @@ repositories {
 
 dependencies {
 	implementation(kotlin("stdlib"))
+	implementation(kotlin("reflect"))
 
 	implementation("io.insert-koin:koin-core:$koinVersion")
 	implementation("info.picocli:picocli:4.6.1")
 	implementation("ch.qos.logback:logback-classic:1.2.6")
 	implementation("io.github.microutils:kotlin-logging-jvm:2.0.10")
 
+	testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion")
 }
 
 java {
@@ -44,4 +47,8 @@ tasks {
 	build {
 		dependsOn(shadowJar)
 	}
+}
+
+tasks.withType<Test> {
+	useJUnitPlatform()
 }

@@ -1,7 +1,7 @@
 package org.laughnman.filesplitter.models.transfer
 
 enum class TransferType {
-	FILE, ARTIFACTORY
+	FILE, ARTIFACTORY, TESTER
 }
 
 interface TransferParameters {
