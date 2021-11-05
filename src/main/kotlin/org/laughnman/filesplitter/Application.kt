@@ -18,7 +18,7 @@ private const val SHORT_PATTERN = "%msg%n"
 private fun configureLogLevel() {
 
 	val loggerContext = LoggerFactory.getILoggerFactory() as LoggerContext
-	val pattern = System.getProperty("ut.log-pattern", "short")
+	val pattern = System.getProperty("log-pattern", "short")
 
 	val encoder = PatternLayoutEncoder()
 	encoder.context = loggerContext
@@ -33,12 +33,12 @@ private fun configureLogLevel() {
 
 	val root = LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME) as ch.qos.logback.classic.Logger
 	root.addAppender(appender)
-	root.level = Level.valueOf(System.getProperty("ut.root-log-level", "ERROR"))
+	root.level = Level.valueOf(System.getProperty("root-log-level", "ERROR"))
 
 	val logger = LoggerFactory.getLogger("org.laughnman.filesplitter") as ch.qos.logback.classic.Logger
 	logger.addAppender(appender)
 	logger.isAdditive = false
-	logger.level = Level.valueOf(System.getProperty("ut.log-level", "INFO"))
+	logger.level = Level.valueOf(System.getProperty("log-level", "INFO"))
 }
 
 fun main(args: Array<String>) {

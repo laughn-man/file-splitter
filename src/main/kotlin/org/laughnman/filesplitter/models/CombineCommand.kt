@@ -1,6 +1,6 @@
 package org.laughnman.filesplitter.models
 
-import picocli.CommandLine
+import picocli.CommandLine.Option
 import picocli.CommandLine.Command
 import picocli.CommandLine.Parameters
 import java.nio.file.Path
@@ -8,19 +8,16 @@ import java.nio.file.Path
 @Command(name = "combine", description = ["Combines split files back together."])
 class CombineCommand(f: (FunctionalCommand) -> Unit) : FunctionalCommand(f) {
 
-	@Parameters
-	lateinit var rootDir: Path
+	@Parameters(index = "0")
+	lateinit var destinationName: Path
 
-	@Parameters
-	lateinit var chunkPattern: String
+	@Parameters(index = "1", arity = "1..*")
+	lateinit var paths: Array<Path>
 
-	@Parameters
-	lateinit var destinationName: String
-
-	@CommandLine.Option(names = ["-d", "--delete-chunk"], description = ["Deletes the chunk after it has been copied."])
+	@Option(names = ["-d", "--delete-chunk"], description = ["Deletes the chunk after it has been copied."])
 	var deleteChunk = false
 
 	override fun toString(): String {
-		return "CombineCommand(rootDir=$rootDir, chunkPattern='$chunkPattern', destinationName='$destinationName')"
+		return "CombineCommand(paths=${paths.contentToString()}, destinationName='$destinationName', deleteChunk=$deleteChunk)"
 	}
 }

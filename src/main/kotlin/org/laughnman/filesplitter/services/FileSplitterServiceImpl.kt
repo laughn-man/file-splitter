@@ -80,21 +80,18 @@ class FileSplitterServiceImpl : FileSplitterService {
 	override fun combineFiles(combineCommand: CombineCommand) {
 		logger.debug { "Calling combineFiles combineCommand: $combineCommand" }
 
-		if (!combineCommand.rootDir.isDirectory()) {
-			throw RuntimeException("${combineCommand.rootDir} must be directory.")
-		}
 
-		File(combineCommand.rootDir.toFile(), combineCommand.destinationName).outputStream().use { fout ->
-			Files.newDirectoryStream(combineCommand.rootDir, combineCommand.chunkPattern).use { dirStream ->
-				dirStream.sorted().map { it.toFile() }.forEach { file ->
-					logger.info { "Combining file $file" }
-					file.inputStream().use { fin ->
-						copyFileChunk(fin, fout, ChunkSize(file.length()))
-					}
+		logger.info { "Combining ${combineCommand.paths.size} files into ${combineCommand.destinationName}" }
+		combineCommand.destinationName.toFile().outputStream().use { fout ->
+			combineCommand.paths.sorted().map { it.toFile() }.forEach { file ->
+				logger.info { "Combining file $file" }
+				file.inputStream().use { fin ->
+					copyFileChunk(fin, fout, ChunkSize(file.length()))
+				}
 
-					if (combineCommand.deleteChunk) {
-						file.delete()
-					}
+				if (combineCommand.deleteChunk) {
+					logger.info { "Deleting $file" }
+					file.delete()
 				}
 			}
 		}
