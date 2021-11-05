@@ -5,9 +5,9 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.contain
-import io.kotest.matchers.string.startWith
+import org.laughnman.filesplitter.models.transfer.FileDestinationParameters
+import org.laughnman.filesplitter.models.transfer.FileSourceParameters
 import org.laughnman.filesplitter.models.transfer.TesterParameters
-import org.laughnman.filesplitter.models.transfer.TransferParameters
 import org.laughnman.filesplitter.models.transfer.TransferType
 
 class TransferParametersParserImplTest : DescribeSpec ({
@@ -61,6 +61,23 @@ class TransferParametersParserImplTest : DescribeSpec ({
 			t.doubleField.shouldBe(3.0)
 			t.stringField.shouldBe("str")
 		}
+
+		it("creates FileSourceParameters object") {
+			val t: FileSourceParameters = transferParametersParserImpl.parse(Direction.SOURCE,
+				"type=file,path=path")
+
+			t.type.shouldBe(TransferType.FILE)
+			t.path.shouldBe("path")
+		}
+
+		it("creates FileDestinationParameters object") {
+			val t: FileDestinationParameters = transferParametersParserImpl.parse(Direction.DESTINATION,
+				"type=file,path=path")
+
+			t.type.shouldBe(TransferType.FILE)
+			t.path.shouldBe("path")
+		}
+
 	}
 
 
