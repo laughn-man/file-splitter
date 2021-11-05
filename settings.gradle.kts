@@ -1,2 +1,2 @@
-rootProject.name = "file-splitter"
+rootProject.name = "universal-transfer"
 
