@@ -4,6 +4,7 @@ import mu.KotlinLogging
 import org.laughnman.filesplitter.models.ChunkSize
 import org.laughnman.filesplitter.models.CombineCommand
 import org.laughnman.filesplitter.models.SplitCommand
+import org.laughnman.filesplitter.utilities.sha256Hash
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
@@ -48,6 +49,8 @@ class FileSplitterServiceImpl : FileSplitterService {
 			throw RuntimeException("$file length of ${file.length()} is less than or equal to chunk size. Nothing to split.")
 		}
 
+		logger.info {"SHA-256 Hash: ${file.sha256Hash()}"}
+
 		// Open the file to split.
 		file.inputStream().use { fin ->
 			logger.debug { "Opened file $file for input." }
@@ -79,24 +82,23 @@ class FileSplitterServiceImpl : FileSplitterService {
 
 	override fun combineFiles(combineCommand: CombineCommand) {
 		logger.debug { "Calling combineFiles combineCommand: $combineCommand" }
+		val outputFile = combineCommand.destinationName.toFile()
 
-		if (!combineCommand.rootDir.isDirectory()) {
-			throw RuntimeException("${combineCommand.rootDir} must be directory.")
-		}
+		logger.info { "Combining ${combineCommand.paths.size} files into ${combineCommand.destinationName}" }
+		outputFile.outputStream().use { fout ->
+			combineCommand.paths.sorted().map { it.toFile() }.forEach { file ->
+				logger.info { "Combining file $file" }
+				file.inputStream().use { fin ->
+					copyFileChunk(fin, fout, ChunkSize(file.length()))
+				}
 
-		File(combineCommand.rootDir.toFile(), combineCommand.destinationName).outputStream().use { fout ->
-			Files.newDirectoryStream(combineCommand.rootDir, combineCommand.chunkPattern).use { dirStream ->
-				dirStream.sorted().map { it.toFile() }.forEach { file ->
-					logger.info { "Combining file $file" }
-					file.inputStream().use { fin ->
-						copyFileChunk(fin, fout, ChunkSize(file.length()))
-					}
-
-					if (combineCommand.deleteChunk) {
-						file.delete()
-					}
+				if (combineCommand.deleteChunk) {
+					logger.info { "Deleting $file" }
+					file.delete()
 				}
 			}
 		}
+
+		logger.info {"SHA-256 Hash: ${outputFile.sha256Hash()}"}
 	}
 }

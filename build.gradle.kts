@@ -2,14 +2,14 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
-	kotlin("jvm") version "1.5.31"
+	kotlin("jvm") version "1.6.0"
 	id("com.github.johnrengelman.shadow") version "7.1.0"
 }
 
 group = "org.laughnman"
-version = "0.1.1"
+version = "0.1.2"
 
-val koinVersion = "3.1.2"
+val koinVersion = "3.1.3"
 val kotestVersion = "4.6.3"
 
 repositories {
@@ -21,9 +21,9 @@ dependencies {
 	implementation(kotlin("reflect"))
 
 	implementation("io.insert-koin:koin-core:$koinVersion")
-	implementation("info.picocli:picocli:4.6.1")
-	implementation("ch.qos.logback:logback-classic:1.2.6")
-	implementation("io.github.microutils:kotlin-logging-jvm:2.0.10")
+	implementation("info.picocli:picocli:4.6.2")
+	implementation("ch.qos.logback:logback-classic:1.2.7")
+	implementation("io.github.microutils:kotlin-logging-jvm:2.0.11")
 
 	testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion")
 }
