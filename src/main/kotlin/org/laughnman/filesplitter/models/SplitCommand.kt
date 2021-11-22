@@ -10,7 +10,7 @@ private class ChunkSizeConverter() : picocli.CommandLine.ITypeConverter<ChunkSiz
 }
 
 @Command(name = "split", description = ["Splits up files into chunks."])
-class SplitCommand(f: (FunctionalCommand) -> Unit) : FunctionalCommand(f) {
+class SplitCommand : AbstractCommand() {
 
 	@CommandLine.Parameters
 	lateinit var path: Path

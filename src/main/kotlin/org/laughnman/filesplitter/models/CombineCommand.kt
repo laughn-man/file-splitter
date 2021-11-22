@@ -6,7 +6,7 @@ import picocli.CommandLine.Parameters
 import java.nio.file.Path
 
 @Command(name = "combine", description = ["Combines split files back together."])
-class CombineCommand(f: (FunctionalCommand) -> Unit) : FunctionalCommand(f) {
+class CombineCommand : AbstractCommand() {
 
 	@Parameters(index = "0")
 	lateinit var destinationName: Path

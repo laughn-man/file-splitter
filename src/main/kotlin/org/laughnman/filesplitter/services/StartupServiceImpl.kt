@@ -2,45 +2,72 @@ package org.laughnman.filesplitter.services
 
 import mu.KotlinLogging
 import org.laughnman.filesplitter.models.*
-import org.laughnman.filesplitter.models.transfer.TransferParameters
-import org.laughnman.filesplitter.utilities.Direction.SOURCE
-import org.laughnman.filesplitter.utilities.Direction.DESTINATION
-import org.laughnman.filesplitter.utilities.TransferParametersParser
+import org.laughnman.filesplitter.models.transfer.FileDestinationCommand
+import org.laughnman.filesplitter.models.transfer.FileSourceCommand
+import org.laughnman.filesplitter.services.transfer.TransferDestinationService
+import org.laughnman.filesplitter.services.transfer.TransferSourceService
 import picocli.CommandLine
 import kotlin.system.exitProcess
 
 private val logger = KotlinLogging.logger {}
 
 class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
-	private val transferParametersParser: TransferParametersParser
+												 private val transferFactoryService: TransferFactoryService
 ) : StartupService {
 
-	private fun runSplit(command: FunctionalCommand) {
+	private fun runSplit(command: SplitCommand) {
 		logger.debug { "Calling runSplit command: $command" }
-		fileSplitterService.splitFiles(command as SplitCommand)
+		fileSplitterService.splitFiles(command)
 	}
 
-	private fun runCombine(command: FunctionalCommand) {
+	private fun runCombine(command: CombineCommand) {
 		logger.debug { "Calling runCombine command: $command" }
-		fileSplitterService.combineFiles(command as CombineCommand)
+		fileSplitterService.combineFiles(command)
 	}
 
-	private fun runTransfer(command: FunctionalCommand) {
-		logger.debug { "Calling runTransfer command: $command" }
-		val transferCommand = command as TransferCommand
-		val sourceParameters: TransferParameters = transferParametersParser.parse(SOURCE, transferCommand.source)
-		val destinationParameters: TransferParameters = transferParametersParser.parse(DESTINATION, transferCommand.destination)
+	private fun runTransfer(sourceCommands: Array<out AbstractCommand>, destinationCommands: Array<out AbstractCommand>) {
+		logger.debug { "Calling runTransfer sourceCommands: $sourceCommands, destinationCommands: $destinationCommands" }
 
+		val sourceCommand = sourceCommands.filter { it.called }.first()
+		val destinationCommand = destinationCommands.filter { it.called }.first()
 
+		val transferSourceService = transferFactoryService.getSourceService<TransferSourceService>(sourceCommand)
+		val transferDestinationService = transferFactoryService.getDestinationService<TransferDestinationService>(destinationCommand)
 	}
 
 	override fun run(args: Array<String>) {
 		logger.info { "Starting Universal Transfer." }
 
-		exitProcess(CommandLine(MainCommand())
-			.addSubcommand(SplitCommand(this::runSplit))
-			.addSubcommand(CombineCommand(this::runCombine))
-			.addSubcommand(TransferCommand(this::runTransfer))
-			.execute(*args))
+		val splitCommand = SplitCommand()
+		val combineCommand = CombineCommand()
+		val transferCommand = TransferCommand()
+
+		val transferSourceCommands = arrayOf(FileSourceCommand())
+		val transferDestinationCommands = arrayOf(FileDestinationCommand())
+
+		val transferCommandLine = CommandLine(transferCommand)
+		transferSourceCommands.forEach { transferCommandLine.addSubcommand(it) }
+		transferDestinationCommands.forEach { transferCommandLine.addSubcommand(it) }
+
+		val returnCode = CommandLine(MainCommand())
+			.setExecutionStrategy(CommandLine.RunAll())
+			.addSubcommand(splitCommand)
+			.addSubcommand(combineCommand)
+			.addSubcommand(transferCommandLine)
+			.execute(*args)
+
+		if (returnCode != 0) {
+			exitProcess(returnCode)
+		}
+
+		if (splitCommand.called) {
+			runSplit(splitCommand)
+		}
+		else if (combineCommand.called) {
+			runCombine(combineCommand)
+		}
+		else if (transferCommand.called) {
+			runTransfer(transferSourceCommands, transferDestinationCommands)
+		}
 	}
 }

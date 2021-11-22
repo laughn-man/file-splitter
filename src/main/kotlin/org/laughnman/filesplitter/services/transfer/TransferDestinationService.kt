@@ -1,9 +1,9 @@
 package org.laughnman.filesplitter.services.transfer
 
+import org.laughnman.filesplitter.models.transfer.TransferInfo
+
 interface TransferDestinationService {
 
-	fun write(bytesRead: Int, buffer: ByteArray)
-
-	fun delete()
+	fun write(input: Sequence<TransferInfo>)
 
 }
