@@ -31,8 +31,12 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 		val sourceCommand = sourceCommands.filter { it.called }.first()
 		val destinationCommand = destinationCommands.filter { it.called }.first()
 
-		val transferSourceService = transferFactoryService.getSourceService<TransferSourceService>(sourceCommand)
-		val transferDestinationService = transferFactoryService.getDestinationService<TransferDestinationService>(destinationCommand)
+		val transferSourceService = transferFactoryService.getSourceService(sourceCommand)
+		val transferDestinationService = transferFactoryService.getDestinationService(destinationCommand)
+
+		transferSourceService.read().forEach { (metaInfo, sequence) ->
+			transferDestinationService.write(metaInfo, sequence)
+		}
 	}
 
 	override fun run(args: Array<String>) {

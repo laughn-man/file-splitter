@@ -18,7 +18,6 @@ repositories {
 
 dependencies {
 	implementation(kotlin("stdlib"))
-	implementation(kotlin("reflect"))
 
 	implementation("io.insert-koin:koin-core:$koinVersion")
 	implementation("info.picocli:picocli:4.6.2")

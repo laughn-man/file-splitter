@@ -6,8 +6,8 @@ import org.laughnman.filesplitter.services.transfer.TransferSourceService
 
 interface TransferFactoryService {
 
-	fun <T: TransferSourceService> getSourceService (command: AbstractCommand): T
+	fun getSourceService (command: AbstractCommand): TransferSourceService
 
-	fun <T: TransferDestinationService> getDestinationService (command: AbstractCommand): T
+	fun getDestinationService (command: AbstractCommand): TransferDestinationService
 
 }
