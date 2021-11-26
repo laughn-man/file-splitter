@@ -7,9 +7,10 @@ plugins {
 }
 
 group = "org.laughnman"
-version = "0.1.2"
+version = "0.1.4"
 
 val koinVersion = "3.1.3"
+val kotestVersion = "4.6.3"
 
 repositories {
 	mavenCentral()
@@ -23,6 +24,7 @@ dependencies {
 	implementation("ch.qos.logback:logback-classic:1.2.7")
 	implementation("io.github.microutils:kotlin-logging-jvm:2.0.11")
 
+	testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion")
 }
 
 java {
@@ -44,4 +46,8 @@ tasks {
 	build {
 		dependsOn(shadowJar)
 	}
+}
+
+tasks.withType<Test> {
+	useJUnitPlatform()
 }

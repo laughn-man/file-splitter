@@ -3,7 +3,7 @@ package org.laughnman.filesplitter.models
 import java.lang.RuntimeException
 
 enum class ChunkSizeUnit(val multiplier: Long) {
-	B(1), KB(1_000), MB(1_000_000), GB(1_000_000_000), TB(1_000_000_000_000)
+	B(1), KB(1_024), MB(1_048_576), GB(1_073_741_824), TB(1_099_511_627_776)
 }
 
 fun String.toChunkSize(): ChunkSize {
@@ -27,4 +27,8 @@ data class ChunkSize(val size: Long, val unit: ChunkSizeUnit = ChunkSizeUnit.B) 
 	override fun toString(): String {
 		return "$size$unit"
 	}
+}
+
+class ChunkSizeConverter() : picocli.CommandLine.ITypeConverter<ChunkSize> {
+	override fun convert(value: String) = value.toChunkSize()
 }

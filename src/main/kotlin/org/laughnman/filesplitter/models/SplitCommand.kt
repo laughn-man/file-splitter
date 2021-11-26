@@ -5,12 +5,10 @@ import picocli.CommandLine.Command
 import picocli.CommandLine.Option
 import java.nio.file.Path
 
-private class ChunkSizeConverter() : picocli.CommandLine.ITypeConverter<ChunkSize> {
-	override fun convert(value: String) = value.toChunkSize()
-}
+
 
 @Command(name = "split", description = ["Splits up files into chunks."])
-class SplitCommand(f: (FunctionalCommand) -> Unit) : FunctionalCommand(f) {
+class SplitCommand : AbstractCommand() {
 
 	@CommandLine.Parameters
 	lateinit var path: Path
