@@ -1,5 +1,6 @@
 package org.laughnman.filesplitter.services.transfer
 
+import mu.KotlinLogging
 import org.laughnman.filesplitter.models.transfer.FileSourceCommand
 import org.laughnman.filesplitter.models.transfer.MetaInfo
 import org.laughnman.filesplitter.models.transfer.TransferInfo
@@ -8,21 +9,29 @@ import java.nio.file.Path
 import kotlin.io.path.fileSize
 import kotlin.io.path.name
 
-class FileTransferSourceService(private val command: FileSourceCommand) : TransferSourceService {
+private val logger = KotlinLogging.logger {}
+
+class FileTransferSourceServiceImpl(private val command: FileSourceCommand) : TransferSourceService {
 
 	private fun buildSequence(path: Path): Sequence<TransferInfo> {
+		logger.debug { "Calling buildSequence path: $path" }
+
 		var fin: FileInputStream? = null
 		val buffer = ByteArray(command.bufferSize.toBytes().toInt())
 
 		return generateSequence {
 			if (fin == null) {
+				logger.info { "Reading file $path" }
 				fin = path.toFile().inputStream()
 			}
 
 			try {
 				val bytesRead = fin!!.read(buffer, 0, buffer.size)
 
+				logger.trace { "bytesRead: $bytesRead" }
+
 				if (bytesRead == -1) {
+					logger.debug { "Closing file $path" }
 					fin!!.close()
 					null
 				}
