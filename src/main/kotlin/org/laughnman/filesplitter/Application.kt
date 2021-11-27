@@ -8,6 +8,7 @@ import ch.qos.logback.core.ConsoleAppender
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import org.koin.core.context.startKoin
+import org.laughnman.filesplitter.dao.daoModule
 import org.laughnman.filesplitter.services.StartupService
 import org.laughnman.filesplitter.services.servicesModule
 import org.slf4j.LoggerFactory
@@ -46,6 +47,7 @@ fun main(args: Array<String>) {
 	configureLogLevel()
 
 	startKoin {
+		modules(daoModule)
 		modules(servicesModule)
 	}
 
