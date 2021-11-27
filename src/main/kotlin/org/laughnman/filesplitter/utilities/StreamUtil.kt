@@ -1,6 +1,5 @@
 package org.laughnman.filesplitter.utilities
 
-import java.io.File
 import java.io.InputStream
 import java.security.MessageDigest
 import java.util.*
@@ -18,13 +17,11 @@ fun InputStream.readAsSequence(): Sequence<Pair<Int, ByteArray>> {
 
 fun ByteArray.base64Encode(): String = Base64.getEncoder().encodeToString(this)
 
-fun File.sha256Hash(): String {
+fun InputStream.sha256Hash(): String {
 	val digest = MessageDigest.getInstance("SHA-256")
 
-	this.inputStream().use { fin ->
-		fin.readAsSequence().forEach { (count, buffer) ->
-			digest.update(buffer, 0, count)
-		}
+	this.readAsSequence().forEach { (count, buffer) ->
+		digest.update(buffer, 0, count)
 	}
 
 	return digest.digest().base64Encode()

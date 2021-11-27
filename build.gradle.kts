@@ -25,6 +25,8 @@ dependencies {
 	implementation("io.github.microutils:kotlin-logging-jvm:2.0.11")
 
 	testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion")
+	testImplementation("io.kotest:kotest-framework-datatest:$kotestVersion")
+	testImplementation("io.mockk:mockk:1.12.1")
 }
 
 java {

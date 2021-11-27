@@ -4,6 +4,6 @@ import org.koin.dsl.module
 
 val servicesModule = module {
 	single { StartupServiceImpl(get(), get()) as StartupService }
-	single { FileSplitterServiceImpl() as FileSplitterService }
-	single { TransferFactoryServiceImpl() as TransferFactoryService }
+	single { FileSplitterServiceImpl(get()) as FileSplitterService }
+	single { TransferFactoryServiceImpl(get()) as TransferFactoryService }
 }
