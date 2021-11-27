@@ -39,7 +39,10 @@ tasks {
 		archiveClassifier.set("")
 		mergeServiceFiles()
 		manifest {
-			attributes(mapOf("Main-Class" to "org.laughnman.filesplitter.ApplicationKt"))
+			attributes(mapOf(
+				"Main-Class" to "org.laughnman.filesplitter.ApplicationKt",
+				"Version" to project.version
+			))
 		}
 	}
 }
