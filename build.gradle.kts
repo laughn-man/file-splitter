@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "org.laughnman"
-version = "0.1.5"
+version = "0.1.6"
 
 val koinVersion = "3.1.3"
 val kotestVersion = "4.6.3"
@@ -39,7 +39,10 @@ tasks {
 		archiveClassifier.set("")
 		mergeServiceFiles()
 		manifest {
-			attributes(mapOf("Main-Class" to "org.laughnman.filesplitter.ApplicationKt"))
+			attributes(mapOf(
+				"Main-Class" to "org.laughnman.filesplitter.ApplicationKt",
+				"Version" to project.version
+			))
 		}
 	}
 }
