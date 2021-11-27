@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "org.laughnman"
-version = "0.1.4"
+version = "0.1.5"
 
 val koinVersion = "3.1.3"
 val kotestVersion = "4.6.3"
