@@ -26,3 +26,10 @@ fun InputStream.sha256Hash(): String {
 
 	return digest.digest().base64Encode()
 }
+
+fun ByteArray.sha256Hash(): String {
+	val digest = MessageDigest.getInstance("SHA-256")
+	digest.update(this, 0, this.size)
+
+	return digest.digest().base64Encode()
+}

@@ -11,6 +11,7 @@ version = "0.1.6"
 
 val koinVersion = "3.1.3"
 val kotestVersion = "4.6.3"
+val ktorVersion = "1.6.6"
 
 repositories {
 	mavenCentral()
@@ -21,6 +22,7 @@ dependencies {
 
 	implementation("io.insert-koin:koin-core:$koinVersion")
 	implementation("info.picocli:picocli:4.6.2")
+	implementation("io.ktor:ktor-client-cio:$ktorVersion")
 	implementation("ch.qos.logback:logback-classic:1.2.7")
 	implementation("io.github.microutils:kotlin-logging-jvm:2.0.11")
 
