@@ -1,5 +1,8 @@
 package org.laughnman.filesplitter.services
 
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import org.laughnman.filesplitter.models.*
 import org.laughnman.filesplitter.models.transfer.FileDestinationCommand
@@ -28,14 +31,16 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 	private fun runTransfer(sourceCommands: Array<out AbstractCommand>, destinationCommands: Array<out AbstractCommand>) {
 		logger.debug { "Calling runTransfer sourceCommands: $sourceCommands, destinationCommands: $destinationCommands" }
 
-		val sourceCommand = sourceCommands.filter { it.called }.first()
-		val destinationCommand = destinationCommands.filter { it.called }.first()
+		val sourceCommand = sourceCommands.first { it.called }
+		val destinationCommand = destinationCommands.first { it.called }
 
 		val transferSourceService = transferFactoryService.getSourceService(sourceCommand)
 		val transferDestinationService = transferFactoryService.getDestinationService(destinationCommand)
 
-		transferSourceService.read().forEach { (metaInfo, sequence) ->
-			transferDestinationService.write(metaInfo, sequence)
+		runBlocking {
+			transferSourceService.read(this).collect { (metaInfo, channel) ->
+				transferDestinationService.write(metaInfo, channel, this)
+			}
 		}
 	}
 
