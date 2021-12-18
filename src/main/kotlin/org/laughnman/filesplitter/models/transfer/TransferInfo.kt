@@ -1,7 +1,6 @@
 package org.laughnman.filesplitter.models.transfer
 
 data class TransferInfo(
-	val fileName: String,
 	val buffer: ByteArray,
 	val bytesRead: Int)
 {
@@ -11,7 +10,6 @@ data class TransferInfo(
 
 		other as TransferInfo
 
-		if (fileName != other.fileName) return false
 		if (!buffer.contentEquals(other.buffer)) return false
 		if (bytesRead != other.bytesRead) return false
 
@@ -19,8 +17,7 @@ data class TransferInfo(
 	}
 
 	override fun hashCode(): Int {
-		var result = fileName.hashCode()
-		result = 31 * result + buffer.contentHashCode()
+		var result = buffer.contentHashCode()
 		result = 31 * result + bytesRead
 		return result
 	}

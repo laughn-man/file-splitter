@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "org.laughnman"
-version = "0.1.6"
+version = "0.1.7"
 
 val koinVersion = "3.1.3"
 val kotestVersion = "4.6.3"
@@ -18,6 +18,8 @@ repositories {
 
 dependencies {
 	implementation(kotlin("stdlib"))
+	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0-RC")
+
 
 	implementation("io.insert-koin:koin-core:$koinVersion")
 	implementation("info.picocli:picocli:4.6.2")
