@@ -1,5 +1,7 @@
 package org.laughnman.filesplitter.services
 
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -7,12 +9,12 @@ import mu.KotlinLogging
 import org.laughnman.filesplitter.models.*
 import org.laughnman.filesplitter.models.transfer.FileDestinationCommand
 import org.laughnman.filesplitter.models.transfer.FileSourceCommand
-import org.laughnman.filesplitter.services.transfer.TransferDestinationService
-import org.laughnman.filesplitter.services.transfer.TransferSourceService
 import picocli.CommandLine
 import kotlin.system.exitProcess
 
 private val logger = KotlinLogging.logger {}
+
+private const val SLEEP_TIME = 100L
 
 class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 												 private val transferFactoryService: TransferFactoryService
@@ -28,18 +30,45 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 		fileSplitterService.combineFiles(command)
 	}
 
-	private fun runTransfer(sourceCommands: Array<out AbstractCommand>, destinationCommands: Array<out AbstractCommand>) {
+	private fun runTransfer(transferCommand: TransferCommand, sourceCommands: Array<out AbstractCommand>, destinationCommands: Array<out AbstractCommand>) {
 		logger.debug { "Calling runTransfer sourceCommands: $sourceCommands, destinationCommands: $destinationCommands" }
 
 		val sourceCommand = sourceCommands.first { it.called }
 		val destinationCommand = destinationCommands.first { it.called }
 
-		val transferSourceService = transferFactoryService.getSourceService(sourceCommand)
-		val transferDestinationService = transferFactoryService.getDestinationService(destinationCommand)
-
 		runBlocking {
-			transferSourceService.read(this).collect { (metaInfo, channel) ->
-				transferDestinationService.write(metaInfo, channel, this)
+			val transferSourceService = transferFactoryService.getSourceService(this, sourceCommand)
+			val transferDestinationService = transferFactoryService.getDestinationService(this, destinationCommand)
+
+			val processBuffer = ArrayList<Job>(transferCommand.parallel)
+
+			transferSourceService.read().collect { (metaInfo, channel) ->
+
+				// Special optimized case for only one process at a time.
+				if (transferCommand.parallel == 1) {
+					transferDestinationService.write(metaInfo, channel)
+				}
+				else {
+					// If the process buffer is full then loop until a job finishes.
+					while (processBuffer.size == transferCommand.parallel) {
+						// Wait for a bit to see if a job frees up.
+						delay(SLEEP_TIME)
+
+						// Loop backwards so items can be removed from the list without causing issues.
+						for (i in processBuffer.indices.reversed()) {
+							if (processBuffer[i].isCompleted) {
+								processBuffer.removeAt(i)
+							}
+						}
+					}
+
+					processBuffer.add(launch { transferDestinationService.write(metaInfo, channel) })
+				}
+			}
+
+			// Wait on the remaining jobs.
+			for (job in processBuffer) {
+				job.join()
 			}
 		}
 	}
@@ -76,7 +105,7 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 			runCombine(combineCommand)
 		}
 		else if (transferCommand.called) {
-			runTransfer(transferSourceCommands, transferDestinationCommands)
+			runTransfer(transferCommand, transferSourceCommands, transferDestinationCommands)
 		}
 	}
 }

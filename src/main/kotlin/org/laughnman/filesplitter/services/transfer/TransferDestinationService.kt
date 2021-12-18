@@ -7,6 +7,6 @@ import org.laughnman.filesplitter.models.transfer.TransferInfo
 
 interface TransferDestinationService {
 
-	fun write(metaInfo: MetaInfo, input: ReceiveChannel<TransferInfo>, scope: CoroutineScope)
+	fun write(metaInfo: MetaInfo, input: ReceiveChannel<TransferInfo>)
 
 }

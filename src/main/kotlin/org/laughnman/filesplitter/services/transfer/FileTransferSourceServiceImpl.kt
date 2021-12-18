@@ -1,12 +1,9 @@
 package org.laughnman.filesplitter.services.transfer
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import org.laughnman.filesplitter.dao.FileDao
 import org.laughnman.filesplitter.models.transfer.FileSourceCommand
@@ -20,9 +17,9 @@ import kotlin.io.path.name
 
 private val logger = KotlinLogging.logger {}
 
-class FileTransferSourceServiceImpl(private val command: FileSourceCommand, private val fileDao: FileDao) : TransferSourceService {
+class FileTransferSourceServiceImpl(private val scope: CoroutineScope, private val command: FileSourceCommand, private val fileDao: FileDao) : TransferSourceService {
 
-	private fun buildChannel(path: Path, scope: CoroutineScope): ReceiveChannel<TransferInfo> {
+	private fun buildChannel(path: Path): ReceiveChannel<TransferInfo> {
 		logger.debug { "Calling buildSequence path: $path" }
 
 		val channel = Channel<TransferInfo>()
@@ -39,10 +36,10 @@ class FileTransferSourceServiceImpl(private val command: FileSourceCommand, priv
 		return channel
 	}
 
-	override fun read(scope: CoroutineScope) = flow {
+	override fun read() = flow {
 		command.filePaths.map { path ->
 			val metaInfo = MetaInfo(fileName = path.name, fileSize = path.fileSize())
-			emit(Pair(metaInfo, buildChannel(path, scope)))
+			emit(Pair(metaInfo, buildChannel(path)))
 		}
 	}
 }

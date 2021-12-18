@@ -1,11 +1,8 @@
 package org.laughnman.filesplitter.services.transfer
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import org.laughnman.filesplitter.dao.FileDao
 import org.laughnman.filesplitter.models.transfer.FileDestinationCommand
@@ -15,9 +12,9 @@ import kotlin.io.path.isDirectory
 
 private val logger = KotlinLogging.logger {}
 
-class FileTransferDestinationServiceImpl(private val command: FileDestinationCommand, private val fileDao: FileDao) : TransferDestinationService {
+class FileTransferDestinationServiceImpl(private val scope: CoroutineScope, private val command: FileDestinationCommand, private val fileDao: FileDao) : TransferDestinationService {
 
-	override fun write(metaInfo: MetaInfo, input: ReceiveChannel<TransferInfo>, scope: CoroutineScope) {
+	override fun write(metaInfo: MetaInfo, input: ReceiveChannel<TransferInfo>) {
 		logger.debug { "Calling write metaInfo: $metaInfo" }
 
 		val path = if (command.path.isDirectory()) command.path.resolve(metaInfo.fileName) else command.path

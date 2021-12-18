@@ -8,6 +8,6 @@ import org.laughnman.filesplitter.models.transfer.TransferInfo
 
 interface TransferSourceService {
 
-	fun read(scope: CoroutineScope): Flow<Pair<MetaInfo, ReceiveChannel<TransferInfo>>>
+	fun read(): Flow<Pair<MetaInfo, ReceiveChannel<TransferInfo>>>
 
 }
