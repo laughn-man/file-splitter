@@ -29,18 +29,12 @@ class ArtifactoryDaoImpl(private val client: HttpClient) : ArtifactoryDao {
 		throw ArtifactoryInputException("Both User and Token were empty.")
 	}
 
-	override suspend fun download(url: String, input: ByteArray, user: String, password: String, token: String) {
+	override suspend fun download(url: String, user: String, password: String, token: String, block: suspend (response: HttpResponse) -> Unit) {
 		client.get<HttpStatement>(url) {
 			headers {
 				append(HttpHeaders.Authorization, buildAuthHeader(user, password, token))
 			}
-		}.execute() { response ->
-			val channel:ByteReadChannel = response.receive()
-
-
-
-
-		}
+		}.execute(block)
 	}
 
 	override suspend fun upload(url: String, input: ByteArray, user: String, password: String, token: String) {

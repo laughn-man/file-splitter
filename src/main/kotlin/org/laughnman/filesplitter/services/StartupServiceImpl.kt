@@ -7,6 +7,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import org.laughnman.filesplitter.models.*
+import org.laughnman.filesplitter.models.transfer.ArtifactoryDestinationCommand
+import org.laughnman.filesplitter.models.transfer.ArtifactorySourceCommand
 import org.laughnman.filesplitter.models.transfer.FileDestinationCommand
 import org.laughnman.filesplitter.models.transfer.FileSourceCommand
 import picocli.CommandLine
@@ -17,8 +19,7 @@ private val logger = KotlinLogging.logger {}
 private const val SLEEP_TIME = 100L
 
 class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
-												 private val transferFactoryService: TransferFactoryService
-) : StartupService {
+	private val transferFactoryService: TransferFactoryService) : StartupService {
 
 	private fun runSplit(command: SplitCommand) {
 		logger.debug { "Calling runSplit command: $command" }
@@ -80,8 +81,8 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 		val combineCommand = CombineCommand()
 		val transferCommand = TransferCommand()
 
-		val transferSourceCommands = arrayOf(FileSourceCommand())
-		val transferDestinationCommands = arrayOf(FileDestinationCommand())
+		val transferSourceCommands = arrayOf(FileSourceCommand(), ArtifactorySourceCommand())
+		val transferDestinationCommands = arrayOf(FileDestinationCommand(), ArtifactoryDestinationCommand())
 
 		val transferCommandLine = CommandLine(transferCommand)
 		transferSourceCommands.forEach { transferCommandLine.addSubcommand(it) }

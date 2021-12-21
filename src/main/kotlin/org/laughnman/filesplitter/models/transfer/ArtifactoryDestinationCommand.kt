@@ -1,5 +1,6 @@
 package org.laughnman.filesplitter.models.transfer
 
+import org.laughnman.filesplitter.models.AbstractCommand
 import org.laughnman.filesplitter.models.ChunkSize
 import org.laughnman.filesplitter.models.ChunkSizeConverter
 import org.laughnman.filesplitter.models.ChunkSizeUnit
@@ -10,7 +11,7 @@ import java.net.URI
 import java.nio.file.Path
 
 @Command(name = "src-artifactory", description = ["Transferring a file from Artifactory."])
-class ArtifactoryDestinationCommand {
+class ArtifactoryDestinationCommand : AbstractCommand() {
 
 	@Parameters
 	lateinit var filePath: String
