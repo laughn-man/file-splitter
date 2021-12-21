@@ -4,13 +4,13 @@ import java.io.InputStream
 import java.security.MessageDigest
 import java.util.*
 
-private const val BUFFER_SIZE = 8192
+private const val DEFAULT_BUFFER_SIZE = 8192
 
-fun InputStream.readAsSequence(): Sequence<Pair<Int, ByteArray>> {
-	val buffer = ByteArray(BUFFER_SIZE)
+fun InputStream.readAsSequence(bufferSize: Int = DEFAULT_BUFFER_SIZE): Sequence<Pair<Int, ByteArray>> {
+	val buffer = ByteArray(bufferSize)
 
 	return generateSequence {
-		val count = this.read(buffer, 0, BUFFER_SIZE)
+		val count = this.read(buffer, 0, bufferSize)
 		if (count > -1) Pair(count, buffer)	else null
 	}
 }
