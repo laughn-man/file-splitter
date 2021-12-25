@@ -14,7 +14,7 @@ import java.nio.file.Path
 class ArtifactorySourceCommand : AbstractCommand() {
 
 	@Parameters
-	lateinit var filePaths: Array<String>
+	lateinit var filePaths: Array<Path>
 
 	@Option(names = ["--url"], required = true, description = ["The Artifactory URL."])
 	lateinit var url: URI
