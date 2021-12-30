@@ -7,10 +7,10 @@ import java.nio.file.Path
 
 interface ArtifactoryDao {
 
-	suspend fun getFileInfo(url: URI, path: Path, user: String = "", password: String = "", token: String = ""): FileInfo
+	suspend fun getFileInfo(url: URI, user: String = "", password: String = "", token: String = ""): FileInfo
 
-	suspend fun downloadArtifact(url: URI, path: Path, user: String = "", password: String = "", token: String = "", f: suspend (channel: ByteReadChannel) -> Unit)
+	suspend fun downloadArtifact(url: URI, user: String = "", password: String = "", token: String = "", f: suspend (channel: ByteReadChannel) -> Unit)
 
-	suspend fun deployArtifact(url: URI, path: Path, input: ByteArray, user: String = "", password: String = "", token: String = ""): FileInfo
+	suspend fun deployArtifact(url: URI, input: ByteArray, user: String = "", password: String = "", token: String = ""): FileInfo
 
 }

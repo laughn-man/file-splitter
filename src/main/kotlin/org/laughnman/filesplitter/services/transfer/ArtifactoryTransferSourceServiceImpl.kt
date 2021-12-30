@@ -8,11 +8,9 @@ import org.laughnman.filesplitter.models.transfer.ArtifactorySourceCommand
 import org.laughnman.filesplitter.models.transfer.MetaInfo
 import org.laughnman.filesplitter.models.transfer.TransferInfo
 
-class ArtifactoryTransferSourceServiceImpl(private val scope: CoroutineScope,
-	private val command: ArtifactorySourceCommand,
-	private val artifactoryDao: ArtifactoryDao) : TransferSourceService {
+class ArtifactoryTransferSourceServiceImpl(private val command: ArtifactorySourceCommand,	private val artifactoryDao: ArtifactoryDao) : TransferSourceService {
 
-	override fun read(): Flow<Pair<MetaInfo, ReceiveChannel<TransferInfo>>> {
+	override fun read(): Flow<Pair<MetaInfo, Flow<TransferInfo>>> {
 		TODO("Not yet implemented")
 	}
 }

@@ -38,16 +38,16 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 		val destinationCommand = destinationCommands.first { it.called }
 
 		runBlocking {
-			val transferSourceService = transferFactoryService.getSourceService(this, sourceCommand)
-			val transferDestinationService = transferFactoryService.getDestinationService(this, destinationCommand)
+			val transferSourceService = transferFactoryService.getSourceService(sourceCommand)
+			val transferDestinationService = transferFactoryService.getDestinationService(destinationCommand)
 
 			val processBuffer = ArrayList<Job>(transferCommand.parallel)
 
-			transferSourceService.read().collect { (metaInfo, channel) ->
+			transferSourceService.read().collect { (metaInfo, flow) ->
 
 				// Special optimized case for only one process at a time.
 				if (transferCommand.parallel == 1) {
-					transferDestinationService.write(metaInfo, channel)
+					transferDestinationService.write(metaInfo, flow)
 				}
 				else {
 					// If the process buffer is full then loop until a job finishes.
@@ -63,7 +63,7 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 						}
 					}
 
-					processBuffer.add(launch { transferDestinationService.write(metaInfo, channel) })
+					processBuffer.add(launch { transferDestinationService.write(metaInfo, flow) })
 				}
 			}
 

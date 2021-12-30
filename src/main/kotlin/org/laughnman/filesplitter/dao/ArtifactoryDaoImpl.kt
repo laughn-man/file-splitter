@@ -29,26 +29,28 @@ class ArtifactoryDaoImpl(private val client: HttpClient) : ArtifactoryDao {
 		throw ArtifactoryInputException("Both User and Token were empty.")
 	}
 
-	override suspend fun getFileInfo(url: URI, path: Path, user: String, password: String, token: String) = client.get<FileInfo>("$url/api/storage$path") {
+	override suspend fun getFileInfo(url: URI, user: String, password: String, token: String) = client.get<FileInfo>(url.toString()) {
 		headers {
 			append(HttpHeaders.Authorization, buildAuthHeader(user, password, token))
 		}
 	}
 
 
-	override suspend fun downloadArtifact(url: URI, path: Path, user: String, password: String, token: String, f: suspend (channel: ByteReadChannel) -> Unit) {
-		client.get<HttpStatement>("$url/$path") {
+	override suspend fun downloadArtifact(url: URI, user: String, password: String, token: String, f: suspend (channel: ByteReadChannel) -> Unit) {
+		client.get<HttpStatement>(url.toString()) {
 			headers {
 				append(HttpHeaders.Authorization, buildAuthHeader(user, password, token))
 			}
-		}.execute {	f(it.receive())	}
+		}.execute {
+			f(it.receive<ByteReadChannel>())
+		}
 	}
 
-	override suspend fun deployArtifact(url: URI, path: Path, input: ByteArray, user: String, password: String, token: String) = client.put<FileInfo>("$url/$path") {
+	override suspend fun deployArtifact(url: URI, input: ByteArray, user: String, password: String, token: String) = client.put<FileInfo>(url.toString()) {
 		headers {
 			append(HttpHeaders.Authorization, buildAuthHeader(user, password, token))
-			append("X-Checksum-Deploy", "true")
-			append("X-Checksum-Sha256", input.sha256Hash())
+			//append("X-Checksum-Deploy", "true")
+			//append("X-Checksum-Sha256", input.sha256Hash())
 		}
 
 		body = ByteArrayContent(input)

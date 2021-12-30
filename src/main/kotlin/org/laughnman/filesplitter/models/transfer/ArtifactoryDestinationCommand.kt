@@ -10,11 +10,8 @@ import picocli.CommandLine.Option
 import java.net.URI
 import java.nio.file.Path
 
-@Command(name = "src-artifactory", description = ["Transferring a file from Artifactory."])
+@Command(name = "dest-artifactory", description = ["Transferring a file to Artifactory."])
 class ArtifactoryDestinationCommand : AbstractCommand() {
-
-	@Parameters
-	lateinit var filePath: Path
 
 	@Option(names = ["--url"], required = true, description = ["The Artifactory URL."])
 	lateinit var url: URI
@@ -22,10 +19,10 @@ class ArtifactoryDestinationCommand : AbstractCommand() {
 	@Option(names = ["-u", "--user"], description = ["The Artifactory user name."])
 	var userName: String = ""
 
-	@Option(names = ["-p", "--password"], interactive = true, description = ["The Artifactory user password."])
+	@Option(names = ["-p", "--password"], interactive = true, arity = "0..1", description = ["The Artifactory user password."])
 	var password: String = ""
 
-	@Option(names = ["-t", "--token"], interactive = true, description = ["The Artifactory token."])
+	@Option(names = ["-t", "--token"], interactive = true, arity = "0..1", description = ["The Artifactory token."])
 	var token: String = ""
 
 	@Option(names = ["-b", "--buffer-size"], converter = [ChunkSizeConverter::class],

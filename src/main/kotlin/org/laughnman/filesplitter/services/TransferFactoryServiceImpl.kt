@@ -16,15 +16,15 @@ import org.laughnman.filesplitter.utilities.exceptions.UnknownCommandException
 
 class TransferFactoryServiceImpl(private val fileDao: FileDao, private val artifactoryDao: ArtifactoryDao) : TransferFactoryService {
 
-	override fun getSourceService(scope: CoroutineScope, command: AbstractCommand) = when(command) {
-		is FileSourceCommand -> FileTransferSourceServiceImpl(scope, command, fileDao)
-		is ArtifactorySourceCommand -> ArtifactoryTransferSourceServiceImpl(scope, command, artifactoryDao)
+	override fun getSourceService(command: AbstractCommand) = when(command) {
+		is FileSourceCommand -> FileTransferSourceServiceImpl(command, fileDao)
+		is ArtifactorySourceCommand -> ArtifactoryTransferSourceServiceImpl(command, artifactoryDao)
 		else -> throw UnknownCommandException("No source service exists for $command")
 	}
 
-	override fun getDestinationService(scope: CoroutineScope, command: AbstractCommand) = when(command) {
-		is FileDestinationCommand -> FileTransferDestinationServiceImpl(scope, command, fileDao)
-		is ArtifactoryDestinationCommand -> ArtifactoryTransferDestinationServiceImpl(scope, command, artifactoryDao)
+	override fun getDestinationService(command: AbstractCommand) = when(command) {
+		is FileDestinationCommand -> FileTransferDestinationServiceImpl(command, fileDao)
+		is ArtifactoryDestinationCommand -> ArtifactoryTransferDestinationServiceImpl(command, artifactoryDao)
 		else -> throw UnknownCommandException("No source service exists for $command")
 	}
 }
