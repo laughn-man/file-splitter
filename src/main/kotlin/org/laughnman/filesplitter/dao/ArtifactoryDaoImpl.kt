@@ -11,6 +11,7 @@ import org.laughnman.filesplitter.models.artifactory.FileInfo
 import org.laughnman.filesplitter.utilities.base64Encode
 import org.laughnman.filesplitter.utilities.exceptions.ArtifactoryInputException
 import org.laughnman.filesplitter.utilities.sha256Hash
+import org.laughnman.filesplitter.utilities.toHex
 import java.net.URI
 import java.nio.file.Path
 
@@ -49,8 +50,8 @@ class ArtifactoryDaoImpl(private val client: HttpClient) : ArtifactoryDao {
 	override suspend fun deployArtifact(url: URI, input: ByteArray, user: String, password: String, token: String) = client.put<FileInfo>(url.toString()) {
 		headers {
 			append(HttpHeaders.Authorization, buildAuthHeader(user, password, token))
-			//append("X-Checksum-Deploy", "true")
-			//append("X-Checksum-Sha256", input.sha256Hash())
+			append("X-Checksum-Deploy", "false")
+			append("X-Checksum-Sha256", input.sha256Hash().toHex())
 		}
 
 		body = ByteArrayContent(input)

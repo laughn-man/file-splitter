@@ -1,18 +1,21 @@
 package org.laughnman.filesplitter.services
 
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
+import org.koin.core.time.measureDuration
 import org.laughnman.filesplitter.models.*
 import org.laughnman.filesplitter.models.transfer.ArtifactoryDestinationCommand
 import org.laughnman.filesplitter.models.transfer.ArtifactorySourceCommand
 import org.laughnman.filesplitter.models.transfer.FileDestinationCommand
 import org.laughnman.filesplitter.models.transfer.FileSourceCommand
 import picocli.CommandLine
+import java.lang.Exception
 import kotlin.system.exitProcess
+import kotlin.system.measureNanoTime
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 private val logger = KotlinLogging.logger {}
 
@@ -31,6 +34,7 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 		fileSplitterService.combineFiles(command)
 	}
 
+	@OptIn(ExperimentalTime::class)
 	private fun runTransfer(transferCommand: TransferCommand, sourceCommands: Array<out AbstractCommand>, destinationCommands: Array<out AbstractCommand>) {
 		logger.debug { "Calling runTransfer sourceCommands: $sourceCommands, destinationCommands: $destinationCommands" }
 
@@ -44,27 +48,46 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 			val processBuffer = ArrayList<Job>(transferCommand.parallel)
 
 			transferSourceService.read().collect { (metaInfo, flow) ->
+				// If the process buffer is full then loop until a job finishes.
+				while (processBuffer.size == transferCommand.parallel) {
+					// Wait for a bit to see if a job frees up.
+					delay(SLEEP_TIME)
 
-				// Special optimized case for only one process at a time.
-				if (transferCommand.parallel == 1) {
-					transferDestinationService.write(metaInfo, flow)
-				}
-				else {
-					// If the process buffer is full then loop until a job finishes.
-					while (processBuffer.size == transferCommand.parallel) {
-						// Wait for a bit to see if a job frees up.
-						delay(SLEEP_TIME)
-
-						// Loop backwards so items can be removed from the list without causing issues.
-						for (i in processBuffer.indices.reversed()) {
-							if (processBuffer[i].isCompleted) {
-								processBuffer.removeAt(i)
-							}
+					// Loop backwards so items can be removed from the list without causing issues.
+					for (i in processBuffer.indices.reversed()) {
+						val job = processBuffer[i]
+						if (job.isCompleted) {
+							processBuffer.removeAt(i)
 						}
 					}
-
-					processBuffer.add(launch { transferDestinationService.write(metaInfo, flow) })
 				}
+
+				// Launch the transfer in a new job.
+				val job = launch {
+					logger.info { "Starting transfer job for file ${metaInfo.fileName}" }
+					val elapsed = measureTime {
+						transferDestinationService.write(metaInfo, flow)
+					}
+
+					val timeStr = elapsed.toComponents { hours, minutes, seconds, nanoseconds ->
+						"$hours:$minutes:$seconds.$nanoseconds"
+					}
+
+					logger.info { "Transfer job for file ${metaInfo.fileName} complete, runtime $timeStr" }
+				}
+				// When complete check if the job stopped do to cancellation or error and report.
+				job.invokeOnCompletion { cause ->
+					if (cause != null) {
+						if (cause is CancellationException) {
+							logger.warn { "File ${metaInfo.fileName} transfer was cancelled, message: ${cause.message}" }
+						}
+						else {
+							logger.error(cause) { "Exception occurred while transferring ${metaInfo.fileName}" }
+						}
+					}
+				}
+				// Add the job to the process buffer.
+				processBuffer.add(job)
 			}
 
 			// Wait on the remaining jobs.
