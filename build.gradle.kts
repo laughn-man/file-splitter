@@ -1,5 +1,6 @@
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
 	kotlin("jvm") version "1.6.0"
@@ -34,6 +35,9 @@ dependencies {
 	testImplementation("io.kotest:kotest-framework-datatest:$kotestVersion")
 	testImplementation("io.mockk:mockk:1.12.1")
 }
+
+val compileKotlin: KotlinCompile by tasks
+compileKotlin.kotlinOptions.freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
 
 java {
 	sourceCompatibility = JavaVersion.VERSION_1_8

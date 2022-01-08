@@ -21,6 +21,6 @@ val daoModule = module {
 			}
 		}
 	}
-	single { FileDaoImpl() as FileDao }
-	single { ArtifactoryDaoImpl(get()) as ArtifactoryDao }
+	single<FileDao> { FileDaoImpl() }
+	single<ArtifactoryDao> { ArtifactoryDaoImpl(get()) }
 }

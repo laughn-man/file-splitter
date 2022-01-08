@@ -3,7 +3,7 @@ package org.laughnman.filesplitter.services
 import org.koin.dsl.module
 
 val servicesModule = module {
-	single { StartupServiceImpl(get(), get()) as StartupService }
-	single { FileSplitterServiceImpl(get()) as FileSplitterService }
-	single { TransferFactoryServiceImpl(get(), get()) as TransferFactoryService }
+	single<StartupService> { StartupServiceImpl(get(), get()) }
+	single<FileSplitterService> { FileSplitterServiceImpl(get()) }
+	single<TransferFactoryService> { TransferFactoryServiceImpl(get(), get()) }
 }
