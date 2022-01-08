@@ -20,7 +20,7 @@ repositories {
 
 dependencies {
 	implementation(kotlin("stdlib"))
-	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0-RC")
+	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
 
 	implementation("io.insert-koin:koin-core:$koinVersion")
 	implementation("info.picocli:picocli:4.6.2")
@@ -47,10 +47,11 @@ java {
 tasks {
 	named<ShadowJar>("shadowJar") {
 		archiveClassifier.set("")
+		archiveVersion.set("")
 		mergeServiceFiles()
 		manifest {
 			attributes(mapOf(
-				"Main-Class" to "org.laughnman.filesplitter.ApplicationKt",
+				"Main-Class" to "org.laughnman.multitransfer.ApplicationKt",
 				"Version" to project.version
 			))
 		}

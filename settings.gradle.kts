@@ -1,2 +1,2 @@
-rootProject.name = "universal-transfer"
+rootProject.name = "multi-transfer"
 

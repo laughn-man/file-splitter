@@ -5,7 +5,7 @@
 		</encoder>
 	</appender>
 
-	<logger name="org.laughnman.filesplitter" level="debug" additivity="false">
+	<logger name="org.laughnman.multitransfer" level="debug" additivity="false">
 		<appender-ref ref="CONSOLE"/>
 	</logger>
 
