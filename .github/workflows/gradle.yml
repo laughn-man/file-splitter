@@ -24,3 +24,8 @@ jobs:
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew clean build
+    - name: Upload jar file
+        uses: actions/upload-artifact@v2
+        with:
+          name: multi-transfer-jar
+          path: build/libs/multi-transfer.jar
