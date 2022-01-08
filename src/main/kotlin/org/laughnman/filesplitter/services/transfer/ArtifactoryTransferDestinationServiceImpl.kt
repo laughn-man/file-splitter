@@ -1,5 +1,7 @@
 package org.laughnman.filesplitter.services.transfer
 
+import io.ktor.client.features.*
+import io.ktor.http.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import mu.KotlinLogging
@@ -16,8 +18,8 @@ class ArtifactoryTransferDestinationServiceImpl(private val command: Artifactory
 	override suspend fun write(metaInfo: MetaInfo, input: Flow<TransferInfo>) {
 		logger.debug { "Calling write with metaInfo: $metaInfo" }
 
-		// If the url ends with a slash then it is assumed we are writing to a directory and the file name will need to be added.
-		val url = if (command.url.path.endsWith("/")) URI("${command.url}${metaInfo.fileName}") else command.url
+		// If the file path ends with a slash then it is assumed we are writing to a directory and the file name will need to be added.
+		val filePath = if (command.filePath.endsWith("/")) "${command.filePath}${metaInfo.fileName}" else command.filePath
 
 		val buffer = ArrayList<Byte>()
 
@@ -30,11 +32,22 @@ class ArtifactoryTransferDestinationServiceImpl(private val command: Artifactory
 			}
 		}
 
-		logger.info { "Deploying file ${metaInfo.fileName} to $url" }
+		logger.info { "Deploying file ${metaInfo.fileName} to $filePath" }
+		val bufferArr = buffer.toByteArray()
 
-		// Move the file into artifactory.
-		val fileInfo = artifactoryDao.deployArtifact(url, buffer.toByteArray(), command.userName, command.exclusive.password, command.exclusive.token)
+		val fileInfo = try {
+			artifactoryDao.deployArtifactWithChecksum(command.url, filePath, bufferArr, command.userName, command.exclusive.password, command.exclusive.token)
+		}
+		catch (e: ClientRequestException) {
+			if (e.response.status == HttpStatusCode.NotFound) {
+				logger.info { "Cached file not found for ${metaInfo.fileName}, uploading new version." }
+				artifactoryDao.deployArtifact(command.url, filePath, bufferArr, command.userName, command.exclusive.password, command.exclusive.token)
+			}
+			else {
+				throw e
+			}
+		}
 
-		logger.info { "File ${metaInfo.fileName} successfully deployed ${fileInfo.downloadUri}" }
+		logger.info { "File ${metaInfo.fileName} successfully deployed to ${fileInfo.downloadUri}" }
 	}
 }

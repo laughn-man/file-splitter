@@ -22,9 +22,12 @@ class ArtifactoryDestinationCommand : AbstractCommand() {
 		var token: String = ""
 	}
 
-	@Parameters(description = [
-		"The Artifactory URL to deploy to including the repository and any folders.",
-		"If url ends in a / then it is assumed that the file will be deployed to a folder."])
+	@Parameters(description = ["Destination file path in artifactory. This should start at the repo name.",
+		"If a file path ends in / it will be treated as a directory and all the files in the directory will be transferred."])
+	lateinit var filePath: String
+
+	@Option(names = ["--url"], required = true, description = ["The base Artifactory URL.",
+		"Should be the base of the Artifactory URL, not including the repo."])
 	lateinit var url: URI
 
 	@Option(names = ["-u", "--user"], description = ["The Artifactory user name."])
@@ -32,9 +35,4 @@ class ArtifactoryDestinationCommand : AbstractCommand() {
 
 	@ArgGroup(exclusive = true, multiplicity = "1")
 	lateinit var exclusive: Exclusive
-
-	@Option(names = ["-b", "--buffer-size"], converter = [ChunkSizeConverter::class],
-		description = ["The size of the buffer. Default is 4KB. Format is in <numeric size>B|KB|MB|GB|TB."])
-	var bufferSize = ChunkSize(4, ChunkSizeUnit.KB)
-
 }
