@@ -7,8 +7,8 @@ import org.laughnman.filesplitter.services.transfer.TransferSourceService
 
 interface TransferFactoryService {
 
-	fun getSourceService (scope: CoroutineScope, command: AbstractCommand): TransferSourceService
+	fun getSourceService (command: AbstractCommand): TransferSourceService
 
-	fun getDestinationService (scope: CoroutineScope, command: AbstractCommand): TransferDestinationService
+	fun getDestinationService (command: AbstractCommand): TransferDestinationService
 
 }

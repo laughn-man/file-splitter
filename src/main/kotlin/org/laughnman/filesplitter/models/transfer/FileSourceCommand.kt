@@ -9,7 +9,7 @@ import picocli.CommandLine.Parameters
 import picocli.CommandLine.Option
 import java.nio.file.Path
 
-@Command(name = "src-file", description = ["Transfering a source file."])
+@Command(name = "src-file", description = ["Transferring a file from the local file system."])
 class FileSourceCommand : AbstractCommand() {
 
 	@Parameters

@@ -17,12 +17,19 @@ fun InputStream.readAsSequence(bufferSize: Int = DEFAULT_BUFFER_SIZE): Sequence<
 
 fun ByteArray.base64Encode(): String = Base64.getEncoder().encodeToString(this)
 
-fun InputStream.sha256Hash(): String {
+fun InputStream.sha256Hash(): ByteArray {
 	val digest = MessageDigest.getInstance("SHA-256")
 
 	this.readAsSequence().forEach { (count, buffer) ->
 		digest.update(buffer, 0, count)
 	}
 
-	return digest.digest().base64Encode()
+	return digest.digest()
 }
+
+fun ByteArray.sha256Hash(): ByteArray {
+	val digest = MessageDigest.getInstance("SHA-256")
+	return digest.digest(this)
+}
+
+fun ByteArray.toHex(): String = this.joinToString("") { "%02x".format(it) }
