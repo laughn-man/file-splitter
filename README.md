@@ -72,7 +72,7 @@ java -jar ./multi-transfer.jar split --delete-original --size 50MB 1GB.bin
 
 This creates 20 chunk files like in the picture below:
 
-![Split Example](/assets/images/example-split.PNG)
+![Split Example](/assets/images/example-split.png)
 
 ### Combine
 
@@ -94,4 +94,4 @@ java -jar ./multi-transfer.jar combine --delete-chunk 1GB.bin 1GB.bin_*
 
 This removes the 20 chunks files and you are left with the 1GB.bin file as it was before the split.
 
-![Combine Example](/assets/images/example-combine.PNG)
+![Combine Example](/assets/images/example-combine.png)
