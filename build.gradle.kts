@@ -28,6 +28,8 @@ dependencies {
 	implementation("io.ktor:ktor-client-cio:$ktorVersion")
 	implementation("io.ktor:ktor-client-jackson:$ktorVersion")
 
+	implementation("software.amazon.awssdk:s3:2.17.129")
+
 	implementation("ch.qos.logback:logback-classic:1.2.7")
 	implementation("io.github.microutils:kotlin-logging-jvm:2.0.11")
 

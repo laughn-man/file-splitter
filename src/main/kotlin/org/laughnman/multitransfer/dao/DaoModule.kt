@@ -22,4 +22,5 @@ val daoModule = module {
 	}
 	single<FileDao> { FileDaoImpl() }
 	single<ArtifactoryDao> { ArtifactoryDaoImpl(get()) }
+	single { S3Dao.Factory }
 }
