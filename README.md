@@ -1,1 +1,60 @@
 # multi-transfer
+The multi-transfer project has four main goals:
+1. Ease the transferring of files from high security enviornments.
+1. Work the same on different OS types such as Windows, Linux, and MacOS.
+1. Allow transferring of files from and to different types of sources and destinations.
+1. Allow file transfers to happen in parrallel to speed up transfers.
+
+There are many applications that provide file transfer for single types of destinations such as SFTP, AWS CLI, Azure CLI, JFrog CLI, etc. While these are all perfectly usable applications they generally only allow transfering to a single endpoint type, such as S3 or Blob storage. They can also be problematic to use in higher security environments where you likely don't have permissions to install them or run unknown executable files. Getting permission is often a lenghty process and usually requires time from an already very busy System Admin. This can cause project delays from what should have been a simple copy operation.
+
+To meet its goals multi-transfer is built with the following in mind:
+* multi-transfer is built to run on Java 8 at a minimum. Java is usually installed on most systems whether they are high security or not and users are generally permitted to execute JAR files. Java is also supported on multiple OS types due to the use of its [JVM](https://en.wikipedia.org/wiki/Java_virtual_machine).
+* multi-transfer has an interface infrastructure that allows easily adding new source and destination types.
+* multi-transfer is built using Kotlin's [Coroutines](https://kotlinlang.org/docs/coroutines-overview.html) to easily allow parrallel transfers without creating large numbers of threads.
+
+# Execution
+multi-transfer.jar is a fat jar. This means all of its dependencies are inside the jar to begin with so there is nothing else the program needs to depend on.
+
+To run the jar all that is need is needed is to do:
+```bash
+java -jar ./multi-transfer.jar
+```
+
+To get the command line help run the following:
+```bash
+java -jar ./multi-transfer.jar --help
+```
+
+To get the application version run the following:
+```bash
+java -jar ./multi-transfer.jar --version
+```
+
+# Commands
+multi-transfer has 3 basic commands that it can perform.
+
+* split: Seperate a file into smaller parts.
+* combine: Put a split file back together.
+* transfer: Transfer a file from a source to destination.
+
+## Splitting and Combining
+The split and combine commands are not necessary for transfering files, however they come in handy when working in low bandwidth environments or networks doing deep packet scans where large transfers may time out before they finish. By splitting up the files into smaller parts and combining them on the other side, larger files can be transfered. 
+
+### Split
+The split command will split a file up into small files called chunks. The split is done at the binary level and as such the command does not care what the file contents are.
+
+The size of each chunk file will can be controlled with the --size option. Each chunk will be at most the provided size. The last chunk will likely be smaller, containing the remaining content.
+
+The chunk will be named the same as the source file with a _###### number on the end. This is to maintain an alphabetical order to the file names so that combine will know what order to put them back together in.
+
+#### Options
+split has the following command line options.
+* -d, --delete-original: Optional. Deletes source file after a successful split. Defaults to off.
+* -s, --size: Optional. The maximum size of each chunk. The format is in \<numeric size\>B|KB|MB|GB|TB. Defaults to 100MB. 
+* path: Required. The path to the file to be split up.
+
+#### Examples
+
+```bash
+
+```
