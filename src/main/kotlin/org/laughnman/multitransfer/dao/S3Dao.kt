@@ -1,6 +1,9 @@
 package org.laughnman.multitransfer.dao
 
+import kotlinx.coroutines.flow.Flow
+import org.laughnman.multitransfer.models.s3.S3Url
 import org.laughnman.multitransfer.models.transfer.S3Command
+import org.laughnman.multitransfer.models.transfer.TransferInfo
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
@@ -38,8 +41,8 @@ interface S3Dao {
 	}
 
 	// See https://github.com/awsdocs/aws-doc-sdk-examples/blob/574f7e288b2208b60a3e9f8274342a64c6a7ce31/javav2/example_code/s3/src/main/java/com/example/s3/S3ObjectOperations.java#L213
-	fun uploadObject(s3Uri: String, block: (buffer: ByteArray, length: Int) -> Unit)
+	fun uploadObject(s3Url: S3Url, flow: Flow<TransferInfo>)
 
-	fun downloadObject(s3Uri: String, block: (buffer: ByteArray) -> Unit)
+	fun downloadObject(s3Url: S3Url, block: (buffer: ByteArray) -> Unit)
 
 }

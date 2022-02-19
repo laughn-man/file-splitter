@@ -4,6 +4,8 @@ import org.laughnman.multitransfer.models.AbstractCommand
 import org.laughnman.multitransfer.models.ChunkSize
 import org.laughnman.multitransfer.models.ChunkSizeConverter
 import org.laughnman.multitransfer.models.ChunkSizeUnit
+import org.laughnman.multitransfer.models.s3.S3Url
+import org.laughnman.multitransfer.models.s3.S3UrlConverter
 import picocli.CommandLine.Parameters
 import picocli.CommandLine.Option
 import picocli.CommandLine.ArgGroup
@@ -26,8 +28,8 @@ class S3Command : AbstractCommand() {
 		lateinit var access: Access
 	}
 
-	@Parameters
-	lateinit var s3Uri: String
+	@Parameters(converter = [S3UrlConverter::class])
+	lateinit var s3Uri: S3Url
 
 	@Option(names = ["-r", "--region"], description = ["The AWS region. The default region is used if not passed."])
 	var region: String = ""

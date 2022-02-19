@@ -1,9 +1,20 @@
 package org.laughnman.multitransfer.models.transfer
 
+import java.nio.ByteBuffer
+
 data class TransferInfo(
 	val buffer: ByteArray,
 	val bytesRead: Int)
 {
+
+	fun toByteBuffer(): ByteBuffer {
+		val byteBuffer = ByteBuffer.allocate(bytesRead)
+		byteBuffer.put(buffer, 0, bytesRead)
+		return byteBuffer
+	}
+
+	fun minSizeBuffer(): ByteArray = buffer.copyOf(bytesRead)
+
 	override fun equals(other: Any?): Boolean {
 		if (this === other) return true
 		if (javaClass != other?.javaClass) return false
