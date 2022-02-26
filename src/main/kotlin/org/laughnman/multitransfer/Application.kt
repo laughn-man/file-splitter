@@ -11,6 +11,8 @@ import org.koin.core.context.startKoin
 import org.laughnman.multitransfer.dao.daoModule
 import org.laughnman.multitransfer.services.StartupService
 import org.laughnman.multitransfer.services.servicesModule
+import org.laughnman.multitransfer.utilities.HttpsUtil
+import org.laughnman.multitransfer.utilities.utilitiesModule
 import org.slf4j.LoggerFactory
 
 private const val FULL_PATTERN = "%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"
@@ -46,7 +48,11 @@ fun main(args: Array<String>) {
 
 	configureLogLevel()
 
+	val httpsUtil = HttpsUtil()
+	httpsUtil.turnOnInsecureSsl()
+
 	startKoin {
+		modules(utilitiesModule)
 		modules(daoModule)
 		modules(servicesModule)
 	}

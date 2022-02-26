@@ -11,7 +11,7 @@ There are many applications that provide file transfer for single types of desti
 To meet its goals multi-transfer is built with the following in mind:
 * multi-transfer is built to run on Java 8 at a minimum. Java is usually installed on most systems whether they are high security or not and users are generally permitted to execute JAR files. Java is also supported on multiple OS types due to the use of its [JVM](https://en.wikipedia.org/wiki/Java_virtual_machine).
 * multi-transfer has an interface infrastructure that allows easily adding new source and destination types.
-* multi-transfer is built using Kotlin's [Coroutines](https://kotlinlang.org/docs/coroutines-overview.html) to easily allow parrallel transfers without creating large numbers of threads.
+* multi-transfer is built using Kotlin's [Coroutines](https://kotlinlang.org/docs/coroutines-overview.html) to easily allow parallel transfers without creating large numbers of threads.
 
 # Execution
 
@@ -95,3 +95,27 @@ java -jar ./multi-transfer.jar combine --delete-chunk 1GB.bin 1GB.bin_*
 This removes the 20 chunks files and you are left with the 1GB.bin file as it was before the split.
 
 ![Combine Example](assets/images/example-combine.png)
+
+## Transfer
+
+Transfer uses prebuilt source and destionation sub commands to transfer files from a source to a destionation. Transfers use buffers transfer files in chunks when possible so as not to consume too much memory. Transfers also attempt to use non-blocking IO when possible so as to prevent thread locking.
+
+### Options
+
+* -p, --parallelism: Optional. Default 1. How many transfers to run in parallel. 
+* --insecure: Optional. When set multi-transfer will ignore the authenticity of any SSL certs and assume they are genuine. Transfers are still encrypted in transit even though the source or destination is not verified. This should only be used when you are confident of the endpoint you are connecting to.
+* --trust-store: Optional. Points to a Java Keystore with trusted certificates that multi-transfer should use in place of the default default certificates installed with Java.
+* --trust-store-password: Required if --trust-store is set. The password to the trust store defined in --trust-store.
+
+### File
+
+The file subcommand type is responsible for 
+
+#### file-src
+
+#### file-dest
+
+
+### Artifactory
+
+Transfer from/to a [JFrog Artifactory](https://jfrog.com/artifactory/) system. 

@@ -6,6 +6,7 @@ import mu.KotlinLogging
 import org.laughnman.multitransfer.models.*
 import org.laughnman.multitransfer.models.transfer.*
 import org.laughnman.multitransfer.services.transfer.TransferDestinationService
+import org.laughnman.multitransfer.utilities.HttpsUtil
 import picocli.CommandLine
 import kotlin.system.exitProcess
 import kotlin.time.ExperimentalTime
@@ -15,7 +16,8 @@ private val logger = KotlinLogging.logger {}
 
 private const val SLEEP_TIME = 100L
 
-class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
+class StartupServiceImpl(private val httpsUtil: HttpsUtil,
+	private val fileSplitterService: FileSplitterService,
 	private val transferFactoryService: TransferFactoryService) : StartupService {
 
 	private fun runSplit(command: SplitCommand) {
@@ -131,6 +133,18 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 			runCombine(combineCommand)
 		}
 		else if (transferCommand.called) {
+
+			transferCommand.sslParams.let {
+				// If insecure is passed turn off SSL verification.
+				if (it.insecure) {
+					httpsUtil.turnOnInsecureSsl()
+				}
+				// If a new trust store is passed, use it instead.
+				else if (it.trustStoreParams.trustStore.isNotBlank()) {
+					httpsUtil.overrideTrustStore(it.trustStoreParams.trustStore, it.trustStoreParams.trustStorePassword)
+				}
+			}
+
 			runTransfer(transferCommand, transferSourceCommands, transferDestinationCommands)
 		}
 	}
