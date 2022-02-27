@@ -13,17 +13,17 @@ import org.laughnman.multitransfer.services.transfer.FileTransferDestinationServ
 import org.laughnman.multitransfer.services.transfer.FileTransferSourceServiceImpl
 import org.laughnman.multitransfer.utilities.exceptions.UnknownCommandException
 
-class TransferFactoryServiceImpl(private val fileDao: FileDao, private val artifactoryDao: ArtifactoryDao) : TransferFactoryService {
+class TransferFactoryServiceImpl(private val fileDao: FileDao, private val artifactoryDaoFactory: ArtifactoryDao.Factory) : TransferFactoryService {
 
 	override fun getSourceService(command: AbstractCommand) = when(command) {
 		is FileSourceCommand -> FileTransferSourceServiceImpl(command, fileDao)
-		is ArtifactorySourceCommand -> ArtifactoryTransferSourceServiceImpl(command, artifactoryDao)
+		is ArtifactorySourceCommand -> ArtifactoryTransferSourceServiceImpl(command, artifactoryDaoFactory.fromCommand(command))
 		else -> throw UnknownCommandException("No source service exists for $command")
 	}
 
 	override fun getDestinationService(command: AbstractCommand) = when(command) {
 		is FileDestinationCommand -> FileTransferDestinationServiceImpl(command, fileDao)
-		is ArtifactoryDestinationCommand -> ArtifactoryTransferDestinationServiceImpl(command, artifactoryDao)
+		is ArtifactoryDestinationCommand -> ArtifactoryTransferDestinationServiceImpl(command, artifactoryDaoFactory.fromCommand(command))
 		else -> throw UnknownCommandException("No source service exists for $command")
 	}
 }
