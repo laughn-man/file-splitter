@@ -98,24 +98,34 @@ This removes the 20 chunks files and you are left with the 1GB.bin file as it wa
 
 ## Transfer
 
-Transfer uses prebuilt source and destionation sub commands to transfer files from a source to a destionation. Transfers use buffers transfer files in chunks when possible so as not to consume too much memory. Transfers also attempt to use non-blocking IO when possible so as to prevent thread locking.
+Transfer uses prebuilt source and destionation sub commands to transfer files from a source to a destination. Transfers use buffers to transfer files in chunks when possible so as not to consume too much memory. Transfers also attempt to use non-blocking IO when possible so as to prevent thread locking.
 
 ### Options
 
 * -p, --parallelism: Optional. Default 1. How many transfers to run in parallel. 
-* --insecure: Optional. When set multi-transfer will ignore the authenticity of any SSL certs and assume they are genuine. Transfers are still encrypted in transit even though the source or destination is not verified. This should only be used when you are confident of the endpoint you are connecting to.
-* --trust-store: Optional. Points to a Java Keystore with trusted certificates that multi-transfer should use in place of the default default certificates installed with Java.
-* --trust-store-password: Required if --trust-store is set. The password to the trust store defined in --trust-store.
 
 ### File
 
-The file subcommand type is responsible for 
+The file subcommand type is responsible for transferring files to and from the local file system.  
 
-#### file-src
+#### src-file
 
-#### file-dest
+Transfers files from the local file system.
 
+##### Options
+
+* -b, --buffer-size: Optional. The size of the buffer. Default is 4KB. Format is in <numeric size>B|KB|MB|GB|TB.
+* filePaths: Required. List of files to be read from. Shell glob pattern can be used to select multiple files.
+
+#### dest-file
+
+Transfers files to the local file system.
+
+##### Options
+
+* path: Required. Path to transfer files into. If the path is a directory the files will be placed inside of it.
 
 ### Artifactory
 
-Transfer from/to a [JFrog Artifactory](https://jfrog.com/artifactory/) system. 
+Transfer files from/to a [JFrog Artifactory](https://jfrog.com/artifactory/) system. 
+

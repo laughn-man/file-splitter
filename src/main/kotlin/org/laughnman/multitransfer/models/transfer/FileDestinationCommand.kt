@@ -8,7 +8,8 @@ import java.nio.file.Path
 @Command(name = "dest-file", description = ["Transferring a file to the local file system."])
 class FileDestinationCommand : AbstractCommand() {
 
-	@Parameters
+	@Parameters(description = ["Path to transfer files into.",
+		"If the path is a directory the files will be placed inside of it."])
 	lateinit var path: Path
 
 }
