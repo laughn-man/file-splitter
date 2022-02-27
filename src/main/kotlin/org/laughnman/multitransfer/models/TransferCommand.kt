@@ -8,5 +8,4 @@ class TransferCommand : AbstractCommand() {
 
 	@Option(names = ["-p", "--parallelism"], description = ["The number of transfers to perform in parallel."])
 	var parallelism = 1
-
 }

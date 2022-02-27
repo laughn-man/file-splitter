@@ -11,7 +11,7 @@ There are many applications that provide file transfer for single types of desti
 To meet its goals multi-transfer is built with the following in mind:
 * multi-transfer is built to run on Java 8 at a minimum. Java is usually installed on most systems whether they are high security or not and users are generally permitted to execute JAR files. Java is also supported on multiple OS types due to the use of its [JVM](https://en.wikipedia.org/wiki/Java_virtual_machine).
 * multi-transfer has an interface infrastructure that allows easily adding new source and destination types.
-* multi-transfer is built using Kotlin's [Coroutines](https://kotlinlang.org/docs/coroutines-overview.html) to easily allow parrallel transfers without creating large numbers of threads.
+* multi-transfer is built using Kotlin's [Coroutines](https://kotlinlang.org/docs/coroutines-overview.html) to easily allow parallel transfers without creating large numbers of threads.
 
 # Execution
 
@@ -95,3 +95,37 @@ java -jar ./multi-transfer.jar combine --delete-chunk 1GB.bin 1GB.bin_*
 This removes the 20 chunks files and you are left with the 1GB.bin file as it was before the split.
 
 ![Combine Example](assets/images/example-combine.png)
+
+## Transfer
+
+Transfer uses prebuilt source and destionation sub commands to transfer files from a source to a destination. Transfers use buffers to transfer files in chunks when possible so as not to consume too much memory. Transfers also attempt to use non-blocking IO when possible so as to prevent thread locking.
+
+### Options
+
+* -p, --parallelism: Optional. Default 1. How many transfers to run in parallel. 
+
+### File
+
+The file subcommand type is responsible for transferring files to and from the local file system.  
+
+#### src-file
+
+Transfers files from the local file system.
+
+##### Options
+
+* -b, --buffer-size: Optional. The size of the buffer. Default is 4KB. Format is in <numeric size>B|KB|MB|GB|TB.
+* filePaths: Required. List of files to be read from. Shell glob pattern can be used to select multiple files.
+
+#### dest-file
+
+Transfers files to the local file system.
+
+##### Options
+
+* path: Required. Path to transfer files into. If the path is a directory the files will be placed inside of it.
+
+### Artifactory
+
+Transfer files from/to a [JFrog Artifactory](https://jfrog.com/artifactory/) system. 
+

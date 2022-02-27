@@ -1,11 +1,57 @@
 package org.laughnman.multitransfer.dao
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.features.*
+import io.ktor.client.features.json.*
 import io.ktor.utils.io.*
+import mu.KotlinLogging
 import org.laughnman.multitransfer.models.artifactory.FileInfo
 import org.laughnman.multitransfer.models.artifactory.FolderInfo
+import org.laughnman.multitransfer.models.transfer.AbstractArtifactoryCommand
 import java.net.URI
+import java.security.cert.X509Certificate
+import javax.net.ssl.X509TrustManager
+
+private val logger = KotlinLogging.logger {}
 
 interface ArtifactoryDao {
+
+	companion object Factory {
+
+		fun fromCommand(artifactoryCommand: AbstractArtifactoryCommand): ArtifactoryDao {
+			val httpClient = HttpClient(CIO) {
+				engine {
+					https {
+						// Turn off the trust manager if the site is insecure.
+						if (artifactoryCommand.insecure) {
+							logger.warn { "Connecting to Artifactory in insecure mode." }
+							trustManager = object : X509TrustManager {
+								override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+
+								override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+
+								override fun getAcceptedIssuers(): Array<X509Certificate>? = null
+							}
+						}
+					}
+				}
+
+				install(JsonFeature) {
+					serializer = JacksonSerializer() {
+						configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+					}
+				}
+
+				install(HttpTimeout) {
+					requestTimeoutMillis = artifactoryCommand.requestTimeout
+				}
+			}
+
+			return ArtifactoryDaoImpl(httpClient)
+		}
+	}
 
 	suspend fun getFileInfo(url: URI, filePath: String, user: String = "", password: String = "", token: String = ""): FileInfo
 
