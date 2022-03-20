@@ -14,7 +14,7 @@ private val logger = KotlinLogging.logger {}
 
 class S3DaoImpl(private val s3: S3Client) : S3Dao {
 
-	override fun uploadObject(s3Url: S3Url, flow: Flow<TransferInfo>) {
+	override suspend fun uploadObject(s3Url: S3Url, flow: Flow<TransferInfo>) {
 		logger.debug { "uploadObject s3Url: $s3Url" }
 
 		val createMultipartUploadRequest = CreateMultipartUploadRequest.builder()
@@ -29,7 +29,7 @@ class S3DaoImpl(private val s3: S3Client) : S3Dao {
 
 		val partList: MutableList<CompletedPart> = ArrayList()
 
-		flow.onEach { transferInfo ->
+		flow.collect { transferInfo ->
 			val partNum = partList.size + 1
 			val uploadPartRequest = UploadPartRequest.builder()
 				.bucket(s3Url.bucket)

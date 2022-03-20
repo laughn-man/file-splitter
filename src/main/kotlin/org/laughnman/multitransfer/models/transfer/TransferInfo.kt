@@ -2,10 +2,16 @@ package org.laughnman.multitransfer.models.transfer
 
 import java.nio.ByteBuffer
 
+sealed interface Transfer
+
+object EOF : Transfer
+
 data class TransferInfo(
 	val buffer: ByteArray,
-	val bytesRead: Int)
+	val bytesRead: Int) : Transfer
 {
+
+	constructor(b: ByteBuffer) : this(b.array(), b.position() + 1)
 
 	fun toByteBuffer(): ByteBuffer {
 		val byteBuffer = ByteBuffer.allocate(bytesRead)

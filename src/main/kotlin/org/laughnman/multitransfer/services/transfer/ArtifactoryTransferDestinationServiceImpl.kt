@@ -8,13 +8,14 @@ import mu.KotlinLogging
 import org.laughnman.multitransfer.dao.ArtifactoryDao
 import org.laughnman.multitransfer.models.transfer.ArtifactoryDestinationCommand
 import org.laughnman.multitransfer.models.transfer.MetaInfo
+import org.laughnman.multitransfer.models.transfer.Transfer
 import org.laughnman.multitransfer.models.transfer.TransferInfo
 
 private val logger = KotlinLogging.logger {}
 
 class ArtifactoryTransferDestinationServiceImpl(private val command: ArtifactoryDestinationCommand, private val artifactoryDao: ArtifactoryDao) : TransferDestinationService {
 
-	override suspend fun write(metaInfo: MetaInfo, input: Flow<TransferInfo>) {
+	override suspend fun write(metaInfo: MetaInfo, input: Flow<Transfer>) {
 		logger.debug { "Calling write with metaInfo: $metaInfo" }
 
 		// If the file path ends with a slash then it is assumed we are writing to a directory and the file name will need to be added.
@@ -25,9 +26,11 @@ class ArtifactoryTransferDestinationServiceImpl(private val command: Artifactory
 		logger.info { "Buffering ${metaInfo.fileName} for transfer to Artifactory." }
 		// Copy each byte array into the buffer.
 		// TODO: Find a more optimized way to do this.
-		input.collect { transferInfo ->
-			for (i in 0 until transferInfo.bytesRead) {
-				buffer.add(transferInfo.buffer[i])
+		input.collect { transfer ->
+			if (transfer is TransferInfo) {
+				for (i in 0 until transfer.bytesRead) {
+					buffer.add(transfer.buffer[i])
+				}
 			}
 		}
 

@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.delay
 import org.laughnman.multitransfer.dao.ArtifactoryDao
 import org.laughnman.multitransfer.models.transfer.ArtifactorySourceCommand
+import org.laughnman.multitransfer.models.transfer.EOF
 import org.laughnman.multitransfer.models.transfer.MetaInfo
 import org.laughnman.multitransfer.models.transfer.TransferInfo
 import org.laughnman.multitransfer.utilities.findFileName
@@ -32,6 +33,8 @@ class ArtifactoryTransferSourceServiceImpl(private val command: ArtifactorySourc
 					emit(TransferInfo(buffer, readLength))
 				}
 			}
+
+			emit(EOF)
 		}
 	}
 

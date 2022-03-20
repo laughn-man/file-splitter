@@ -6,9 +6,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import mu.KotlinLogging
 import org.laughnman.multitransfer.dao.FileDao
-import org.laughnman.multitransfer.models.transfer.FileSourceCommand
-import org.laughnman.multitransfer.models.transfer.MetaInfo
-import org.laughnman.multitransfer.models.transfer.TransferInfo
+import org.laughnman.multitransfer.models.transfer.*
 import org.laughnman.multitransfer.utilities.readAsSequence
 import java.nio.file.Path
 import kotlin.io.path.fileSize
@@ -18,13 +16,14 @@ private val logger = KotlinLogging.logger {}
 
 class FileTransferSourceServiceImpl(private val command: FileSourceCommand, private val fileDao: FileDao) : TransferSourceService {
 
-	private fun buildFlow(path: Path): Flow<TransferInfo> = flow {
+	private fun buildFlow(path: Path): Flow<Transfer> = flow {
 		logger.debug { "Calling buildSequence path: $path" }
 
 		fileDao.openForRead(path.toFile()).use { fin ->
 			fin.readAsSequence(command.bufferSize.toBytes().toInt()).forEach { (readLength, buffer) ->
 				emit(TransferInfo(buffer, readLength))
 			}
+			emit(EOF)
 		}
 	}.flowOn(Dispatchers.IO)
 
