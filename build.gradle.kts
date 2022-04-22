@@ -8,11 +8,11 @@ plugins {
 }
 
 group = "org.laughnman"
-version = "0.2.1"
+version = "0.2.2"
 
 val koinVersion = "3.1.3"
 val kotestVersion = "4.6.3"
-val ktorVersion = "1.6.6"
+val ktorVersion = "1.6.8"
 
 repositories {
 	mavenCentral()
