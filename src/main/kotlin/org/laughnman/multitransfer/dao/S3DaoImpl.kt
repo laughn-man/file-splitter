@@ -1,20 +1,18 @@
 package org.laughnman.multitransfer.dao
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.onEach
 import mu.KotlinLogging
 import org.laughnman.multitransfer.models.s3.S3Url
-import org.laughnman.multitransfer.models.transfer.TransferInfo
+import org.laughnman.multitransfer.models.transfer.Next
 import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.*
-import java.nio.ByteBuffer
 
 private val logger = KotlinLogging.logger {}
 
 class S3DaoImpl(private val s3: S3Client) : S3Dao {
 
-	override suspend fun uploadObject(s3Url: S3Url, flow: Flow<TransferInfo>) {
+	override suspend fun uploadObject(s3Url: S3Url, flow: Flow<Next>) {
 		logger.debug { "uploadObject s3Url: $s3Url" }
 
 		val createMultipartUploadRequest = CreateMultipartUploadRequest.builder()

@@ -2,6 +2,7 @@ package org.laughnman.multitransfer.services
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import mu.KotlinLogging
 import org.laughnman.multitransfer.models.*
 import org.laughnman.multitransfer.models.transfer.*
@@ -30,30 +31,40 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 
 	@OptIn(ExperimentalTime::class)
 	private fun CoroutineScope.buildJob(transferDestinationService: TransferDestinationService,
-											 metaInfo: MetaInfo,
-											 flow: Flow<TransferInfo>): Job {
+											 flow: Flow<Transfer>): Job {
 		val job = launch {
-			logger.info { "Starting transfer job for file ${metaInfo.fileName}" }
+
+			var metaInfo: MetaInfo? = null
+
 			val elapsed = measureTime {
-				transferDestinationService.write(metaInfo, flow)
+				val block = transferDestinationService.write()
+				flow.collect { transfer ->
+					when (transfer) {
+						is Start -> {
+							logger.info { "Starting transfer job for file ${transfer.metaInfo.fileName}." }
+							block(transfer)
+						}
+						is Next -> {
+							block(transfer)
+						}
+						is Complete -> {
+							block(transfer)
+							logger.info { "Finishing transfer job for file ${transfer.metaInfo.fileName}." }
+						}
+						is Error -> {
+							block(transfer)
+							logger.error(transfer.exception) { "Exception occured in transfer job for file ${transfer.metaInfo.fileName}." }
+						}
+					}
+
+				}
 			}
 
 			val timeStr = elapsed.toComponents { hours, minutes, seconds, nanoseconds ->
 				"$hours:$minutes:$seconds.$nanoseconds"
 			}
 
-			logger.info { "Transfer job for file ${metaInfo.fileName} complete, runtime $timeStr" }
-		}
-		// When complete check if the job stopped do to cancellation or error and report.
-		job.invokeOnCompletion { cause ->
-			if (cause != null) {
-				if (cause is CancellationException) {
-					logger.warn { "File ${metaInfo.fileName} transfer was cancelled, message: ${cause.message}" }
-				}
-				else {
-					logger.error(cause) { "Exception occurred while transferring ${metaInfo.fileName}" }
-				}
-			}
+			logger.info { "Transfer job for file ${metaInfo!!.fileName} complete, runtime $timeStr" }
 		}
 
 		return job
@@ -71,7 +82,7 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 
 			val processBuffer = ArrayList<Job>(transferCommand.parallelism)
 
-			transferSourceService.read().collect { (metaInfo, flow) ->
+			transferSourceService.read().collect { flow ->
 				// If the process buffer is full then loop until a job finishes.
 				while (processBuffer.size == transferCommand.parallelism) {
 					// Wait for a bit to see if a job frees up.
@@ -86,7 +97,7 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 					}
 				}
 
-				val job = buildJob(transferDestinationService, metaInfo, flow)
+				val job = buildJob(transferDestinationService, flow)
 
 				// Add the job to the process buffer.
 				processBuffer.add(job)

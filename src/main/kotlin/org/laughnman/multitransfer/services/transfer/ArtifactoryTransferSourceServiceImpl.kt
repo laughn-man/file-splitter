@@ -3,11 +3,9 @@ package org.laughnman.multitransfer.services.transfer
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.delay
 import org.laughnman.multitransfer.dao.ArtifactoryDao
-import org.laughnman.multitransfer.models.transfer.ArtifactorySourceCommand
-import org.laughnman.multitransfer.models.transfer.EOF
-import org.laughnman.multitransfer.models.transfer.MetaInfo
-import org.laughnman.multitransfer.models.transfer.TransferInfo
+import org.laughnman.multitransfer.models.transfer.*
 import org.laughnman.multitransfer.utilities.findFileName
+import java.lang.Exception
 
 private const val SUSPEND_TIME = 100L
 
@@ -18,23 +16,28 @@ class ArtifactoryTransferSourceServiceImpl(private val command: ArtifactorySourc
 		return MetaInfo(fileName = filePath.findFileName(), fileSize = fileInfo.size)
 	}
 
-	private suspend fun buildFlow(filePath: String) = flow {
+	private suspend fun buildFlow(metaInfo: MetaInfo, filePath: String) = flow {
 		artifactoryDao.downloadArtifact(command.url, filePath, command.userName, command.exclusive.password, command.exclusive.token) { channel ->
+			emit(Start(metaInfo))
 
-			val buffer = ByteArray(command.bufferSize.toBytes().toInt())
+			try {
+				val buffer = ByteArray(command.bufferSize.toBytes().toInt())
 
-			while (!channel.isClosedForRead) {
-				val readLength = channel.readAvailable(buffer, 0, buffer.size)
+				while (!channel.isClosedForRead) {
+					val readLength = channel.readAvailable(buffer, 0, buffer.size)
 
-				if (readLength == 0) {
-					delay(SUSPEND_TIME)
+					if (readLength == 0) {
+						delay(SUSPEND_TIME)
+					} else if (readLength > 0) {
+						emit(Next(metaInfo, buffer, readLength))
+					}
 				}
-				else if (readLength > 0) {
-					emit(TransferInfo(buffer, readLength))
-				}
+
+				emit(Complete(metaInfo))
 			}
-
-			emit(EOF)
+			catch (e: Exception) {
+				emit(Error(metaInfo, e))
+			}
 		}
 	}
 
@@ -49,14 +52,12 @@ class ArtifactoryTransferSourceServiceImpl(private val command: ArtifactorySourc
 					.forEach { child ->
 						val filePath = "${folderInfo.repo}/${folderInfo.path}${child.uri}"
 						val metaInfo = buildMetaInfo(filePath)
-						val flow = buildFlow(filePath)
-						emit(Pair(metaInfo, flow))
+						emit(buildFlow(metaInfo, filePath))
 					}
 			}
 			else {
 				val metaInfo = buildMetaInfo(path)
-				val flow = buildFlow(path)
-				emit(Pair(metaInfo, flow))
+				emit(buildFlow(metaInfo, path))
 			}
 		}
 	}
