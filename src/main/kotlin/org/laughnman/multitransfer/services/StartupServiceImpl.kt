@@ -2,15 +2,14 @@ package org.laughnman.multitransfer.services
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import mu.KotlinLogging
 import org.laughnman.multitransfer.models.*
 import org.laughnman.multitransfer.models.transfer.*
 import org.laughnman.multitransfer.services.transfer.TransferDestinationService
+import org.laughnman.multitransfer.utilities.TransferMonitor
 import picocli.CommandLine
 import kotlin.system.exitProcess
 import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
 
 private val logger = KotlinLogging.logger {}
 
@@ -35,36 +34,40 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 		val job = launch {
 
 			var metaInfo: MetaInfo? = null
+			val transferMonitor = TransferMonitor()
 
-			val elapsed = measureTime {
-				val block = transferDestinationService.write()
-				flow.collect { transfer ->
-					when (transfer) {
-						is Start -> {
-							logger.info { "Starting transfer job for file ${transfer.metaInfo.fileName}." }
-							block(transfer)
-						}
-						is Next -> {
-							block(transfer)
-						}
-						is Complete -> {
-							block(transfer)
-							logger.info { "Finishing transfer job for file ${transfer.metaInfo.fileName}." }
-						}
-						is Error -> {
-							block(transfer)
-							logger.error(transfer.exception) { "Exception occured in transfer job for file ${transfer.metaInfo.fileName}." }
-						}
+			val block = transferDestinationService.write()
+			flow.collect { transfer ->
+				when (transfer) {
+					is Start -> {
+						metaInfo = transfer.metaInfo
+						transferMonitor.start()
+						logger.info { "${transfer.metaInfo.fileName}: Starting transfer job." }
+						block(transfer)
 					}
-
+					is Next -> {
+						block(transfer)
+						transferMonitor.addTransferRecord(transfer.bytesRead)
+						logger.info { "${transfer.metaInfo.fileName}: Transferred ${transfer.bytesRead} at ${transferMonitor.calculateMegaBytesPerSecond()} MB/s." }
+					}
+					is Complete -> {
+						block(transfer)
+						transferMonitor.stop()
+						logger.info { "${transfer.metaInfo.fileName}: Finishing transfer job." }
+					}
+					is Error -> {
+						block(transfer)
+						transferMonitor.stop()
+						logger.error(transfer.exception) { "${transfer.metaInfo.fileName}: Exception occurred in transfer job." }
+					}
 				}
 			}
 
-			val timeStr = elapsed.toComponents { hours, minutes, seconds, nanoseconds ->
+			val timeStr = transferMonitor.calculateTotalRunTime().toComponents { hours, minutes, seconds, nanoseconds ->
 				"$hours:$minutes:$seconds.$nanoseconds"
 			}
 
-			logger.info { "Transfer job for file ${metaInfo!!.fileName} complete, runtime $timeStr" }
+			logger.info { "Transfer job for file ${metaInfo!!.fileName} complete, runtime $timeStr at ${transferMonitor.calculateTotalMegaBytesPerSecond()} MB/s." }
 		}
 
 		return job

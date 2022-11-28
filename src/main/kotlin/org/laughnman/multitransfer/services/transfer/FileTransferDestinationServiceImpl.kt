@@ -1,10 +1,14 @@
 package org.laughnman.multitransfer.services.transfer
 
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import org.laughnman.multitransfer.dao.FileDao
-import org.laughnman.multitransfer.models.transfer.*
+import org.laughnman.multitransfer.models.transfer.FileDestinationCommand
+import org.laughnman.multitransfer.models.transfer.Next
+import org.laughnman.multitransfer.models.transfer.Start
+import org.laughnman.multitransfer.models.transfer.Transfer
+import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import kotlin.io.path.isDirectory
 
@@ -14,7 +18,7 @@ class FileTransferDestinationServiceImpl(private val command: FileDestinationCom
 
 	override suspend fun write(): suspend (Transfer) -> Unit {
 
-		var fout: OutputStream? = null
+		var fout: OutputStream = ByteArrayOutputStream(0)
 
 		return { transfer ->
 			withContext(Dispatchers.IO) {
@@ -27,9 +31,9 @@ class FileTransferDestinationServiceImpl(private val command: FileDestinationCom
 					}
 					is Next -> {
 						logger.trace { "Writing out transferInfo: $transfer" }
-						fout?.write(transfer.buffer, 0, transfer.bytesRead)
+						fout.write(transfer.buffer, 0, transfer.bytesRead)
 					}
-					is Complete -> fout?.close()
+					else -> fout.close()
 				}
 			}
 		}

@@ -13,7 +13,7 @@ class ArtifactoryTransferDestinationServiceImpl(private val command: Artifactory
 
 	override suspend fun write(): suspend (Transfer) -> Unit {
 
-		var buffer: ByteBuffer? = null
+		var buffer: ByteBuffer = ByteBuffer.allocate(0)
 
 		return { transfer ->
 			when(transfer) {
@@ -22,12 +22,12 @@ class ArtifactoryTransferDestinationServiceImpl(private val command: Artifactory
 					buffer = ByteBuffer.allocate(transfer.metaInfo.fileSize.toInt())
 				}
 				is Next -> {
-					buffer?.put(transfer.buffer, 0, transfer.bytesRead)
+					buffer.put(transfer.buffer, 0, transfer.bytesRead)
 				}
 				is Complete -> {
 					val filePath = if (command.filePath.endsWith("/")) "${command.filePath}${transfer.metaInfo.fileName}" else command.filePath
-					val bufferArr = buffer!!.array()
-					val fileInfo = try {
+					val bufferArr = buffer.array()
+					try {
 						artifactoryDao.deployArtifactWithChecksum(command.url, filePath, bufferArr, command.userName, command.exclusive.password, command.exclusive.token)
 					}
 					catch (e: ClientRequestException) {
@@ -39,6 +39,9 @@ class ArtifactoryTransferDestinationServiceImpl(private val command: Artifactory
 							throw e
 						}
 					}
+				}
+				is Error -> {
+					logger.error(transfer.exception) { "Error received from source." }
 				}
 			}
 		}
