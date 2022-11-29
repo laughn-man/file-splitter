@@ -10,7 +10,7 @@ import java.nio.ByteBuffer
 
 fun Flow<Next>.buffer(bufferSize: Int): Flow<Transfer> {
 
-	var buffer = ByteBuffer.allocate(0)
+	lateinit var buffer: ByteBuffer
 
 	return this.transform<Transfer, Transfer> { t ->
 		when(t) {

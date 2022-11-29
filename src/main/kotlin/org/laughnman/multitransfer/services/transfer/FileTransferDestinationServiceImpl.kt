@@ -8,7 +8,6 @@ import org.laughnman.multitransfer.models.transfer.FileDestinationCommand
 import org.laughnman.multitransfer.models.transfer.Next
 import org.laughnman.multitransfer.models.transfer.Start
 import org.laughnman.multitransfer.models.transfer.Transfer
-import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import kotlin.io.path.isDirectory
 
@@ -18,7 +17,7 @@ class FileTransferDestinationServiceImpl(private val command: FileDestinationCom
 
 	override suspend fun write(): suspend (Transfer) -> Unit {
 
-		var fout: OutputStream = ByteArrayOutputStream(0)
+		lateinit var fout: OutputStream
 
 		return { transfer ->
 			withContext(Dispatchers.IO) {

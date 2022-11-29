@@ -1,14 +1,14 @@
 package org.laughnman.multitransfer.dao
 
-import kotlinx.coroutines.flow.Flow
 import org.laughnman.multitransfer.models.s3.S3Url
 import org.laughnman.multitransfer.models.transfer.AbstractS3Command
-import org.laughnman.multitransfer.models.transfer.Next
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+import software.amazon.awssdk.core.ResponseInputStream
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.model.*
 import java.net.URI
 
 interface S3Dao {
@@ -31,7 +31,7 @@ interface S3Dao {
 					s3Builder.credentialsProvider(ProfileCredentialsProvider.create(it.profile))
 				}
 				else {
-					val awsCreds = AwsBasicCredentials.create(it.access.accessKey, it.access.accessKey)
+					val awsCreds = AwsBasicCredentials.create(it.access.accessKey, it.access.accessSecret)
 					s3Builder.credentialsProvider(StaticCredentialsProvider.create(awsCreds))
 				}
 			}
@@ -41,8 +41,12 @@ interface S3Dao {
 	}
 
 	// See https://github.com/awsdocs/aws-doc-sdk-examples/blob/574f7e288b2208b60a3e9f8274342a64c6a7ce31/javav2/example_code/s3/src/main/java/com/example/s3/S3ObjectOperations.java#L213
-	suspend fun uploadObject(s3Url: S3Url, flow: Flow<Next>)
+	fun createMultipartUpload(s3Url: S3Url): CreateMultipartUploadResponse
+	fun uploadPart(partNum: Int, multipartUploadResponse: CreateMultipartUploadResponse, buffer: ByteArray): CompletedPart
+	fun completeMultipartUpload(partList: List<CompletedPart>, multipartUploadResponse: CreateMultipartUploadResponse)
 
-	fun downloadObject(s3Url: S3Url, block: (buffer: ByteArray) -> Unit)
+	fun getObjectInputStream(s3Url: S3Url): ResponseInputStream<GetObjectResponse>
+	fun getObjectHead(s3Url: S3Url): HeadObjectResponse
+	fun listObjects(s3Url: S3Url): List<S3Object>
 
 }

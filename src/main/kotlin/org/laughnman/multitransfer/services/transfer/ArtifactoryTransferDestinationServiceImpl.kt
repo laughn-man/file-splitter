@@ -13,7 +13,7 @@ class ArtifactoryTransferDestinationServiceImpl(private val command: Artifactory
 
 	override suspend fun write(): suspend (Transfer) -> Unit {
 
-		var buffer: ByteBuffer = ByteBuffer.allocate(0)
+		lateinit var buffer: ByteBuffer
 
 		return { transfer ->
 			when(transfer) {

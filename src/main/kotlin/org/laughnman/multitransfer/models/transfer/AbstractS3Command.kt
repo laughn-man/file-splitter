@@ -15,7 +15,7 @@ abstract class AbstractS3Command : AbstractCommand() {
 	}
 
 	class Exclusive {
-		@Option(names = ["-p", "--profile"], description = ["The AWS region. The AWS profile to use. The default profile is used if not passed."])
+		@Option(names = ["-p", "--profile"], description = ["The AWS profile to use. The default profile is used if not passed."])
 		var profile: String = ""
 
 		@ArgGroup(exclusive = false)

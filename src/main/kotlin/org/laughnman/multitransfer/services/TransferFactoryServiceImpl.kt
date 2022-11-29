@@ -14,13 +14,14 @@ class TransferFactoryServiceImpl(private val fileDao: FileDao, private val s3Dao
 	override fun getSourceService(command: AbstractCommand) = when(command) {
 		is FileSourceCommand -> FileTransferSourceServiceImpl(command, fileDao)
 		is ArtifactorySourceCommand -> ArtifactoryTransferSourceServiceImpl(command, artifactoryDaoFactory.fromCommand(command))
-		is S3DestinationCommand -> S3TransferSourceService(command, s3DaoFactory.fromCommand(command))
+		is S3SourceCommand -> S3TransferSourceServiceImpl(command, s3DaoFactory.fromCommand(command))
 		else -> throw UnknownCommandException("No source service exists for $command")
 	}
 
 	override fun getDestinationService(command: AbstractCommand) = when(command) {
 		is FileDestinationCommand -> FileTransferDestinationServiceImpl(command, fileDao)
 		is ArtifactoryDestinationCommand -> ArtifactoryTransferDestinationServiceImpl(command, artifactoryDaoFactory.fromCommand(command))
-		else -> throw UnknownCommandException("No source service exists for $command")
+		is S3DestinationCommand -> S3TransferDestinationServiceImpl(command, s3DaoFactory.fromCommand(command))
+		else -> throw UnknownCommandException("No destination service exists for $command")
 	}
 }
