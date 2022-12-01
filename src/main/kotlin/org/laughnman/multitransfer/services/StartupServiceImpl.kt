@@ -120,8 +120,8 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 		val combineCommand = CombineCommand()
 		val transferCommand = TransferCommand()
 
-		val transferSourceCommands = arrayOf(FileSourceCommand(), ArtifactorySourceCommand())
-		val transferDestinationCommands = arrayOf(FileDestinationCommand(), ArtifactoryDestinationCommand())
+		val transferSourceCommands = arrayOf(FileSourceCommand(), ArtifactorySourceCommand(), S3SourceCommand())
+		val transferDestinationCommands = arrayOf(FileDestinationCommand(), ArtifactoryDestinationCommand(), S3DestinationCommand())
 
 		val transferCommandLine = CommandLine(transferCommand)
 		transferSourceCommands.forEach { transferCommandLine.addSubcommand(it) }

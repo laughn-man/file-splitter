@@ -6,6 +6,7 @@ import software.amazon.awssdk.core.ResponseInputStream
 import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.*
+import java.nio.ByteBuffer
 
 private val logger = KotlinLogging.logger {}
 
@@ -22,7 +23,9 @@ class S3DaoImpl(private val s3: S3Client) : S3Dao {
 		return s3.createMultipartUpload(createMultipartUploadRequest)
 	}
 
-	override fun uploadPart(partNum: Int, multipartUploadResponse: CreateMultipartUploadResponse, buffer: ByteArray): CompletedPart {
+	fun putObject()
+
+	override fun uploadPart(partNum: Int, multipartUploadResponse: CreateMultipartUploadResponse, buffer: ByteBuffer): CompletedPart {
 		val uploadPartRequest = UploadPartRequest.builder()
 			.bucket(multipartUploadResponse.bucket())
 			.key(multipartUploadResponse.key())
@@ -30,7 +33,7 @@ class S3DaoImpl(private val s3: S3Client) : S3Dao {
 			.partNumber(partNum)
 			.build()
 
-		val eTag = s3.uploadPart(uploadPartRequest, RequestBody.fromBytes(buffer)).eTag()
+		val eTag = s3.uploadPart(uploadPartRequest, RequestBody.fromByteBuffer(buffer)).eTag()
 		return CompletedPart.builder()
 			.partNumber(partNum)
 			.eTag(eTag)

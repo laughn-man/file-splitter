@@ -3,14 +3,12 @@ package org.laughnman.multitransfer.models.s3
 import picocli.CommandLine.ITypeConverter
 import java.lang.IllegalArgumentException
 
-private val regex = Regex("s3://(bucket)/(key)")
+private val regex = Regex("s3://([a-z0-9\\.-]+)/([\\w!-_\\.*'\\(\\)]+)")
 
 fun String.toS3Url(): S3Url {
-	if (!regex.matches(this)) {
-		throw IllegalArgumentException("Value $this is not a valid S3 URL.")
-	}
+	val match = regex.matchEntire(this) ?: throw IllegalArgumentException("Value $this is not a valid S3 URL.")
 
-	val (b, k) = regex.split(this)
+	val (b, k) = match.destructured
 	return S3Url(b, k)
 }
 

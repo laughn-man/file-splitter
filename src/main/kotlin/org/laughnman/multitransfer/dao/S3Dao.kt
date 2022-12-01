@@ -6,10 +6,13 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.core.ResponseInputStream
+import software.amazon.awssdk.http.SdkHttpClient
+import software.amazon.awssdk.http.apache.ApacheHttpClient
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.*
 import java.net.URI
+import java.nio.ByteBuffer
 
 interface S3Dao {
 
@@ -17,6 +20,7 @@ interface S3Dao {
 
 		fun fromCommand(s3Command: AbstractS3Command): S3Dao {
 			val s3Builder = S3Client.builder()
+				.httpClient(ApacheHttpClient.builder().build())
 
 			if (s3Command.region.isNotBlank()) {
 				s3Builder.region(Region.of(s3Command.region))
@@ -42,7 +46,7 @@ interface S3Dao {
 
 	// See https://github.com/awsdocs/aws-doc-sdk-examples/blob/574f7e288b2208b60a3e9f8274342a64c6a7ce31/javav2/example_code/s3/src/main/java/com/example/s3/S3ObjectOperations.java#L213
 	fun createMultipartUpload(s3Url: S3Url): CreateMultipartUploadResponse
-	fun uploadPart(partNum: Int, multipartUploadResponse: CreateMultipartUploadResponse, buffer: ByteArray): CompletedPart
+	fun uploadPart(partNum: Int, multipartUploadResponse: CreateMultipartUploadResponse, buffer: ByteBuffer): CompletedPart
 	fun completeMultipartUpload(partList: List<CompletedPart>, multipartUploadResponse: CreateMultipartUploadResponse)
 
 	fun getObjectInputStream(s3Url: S3Url): ResponseInputStream<GetObjectResponse>

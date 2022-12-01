@@ -21,7 +21,8 @@ class S3TransferDestinationServiceImpl(private val s3DestinationCommand: S3Desti
 					multipartUploadResponse = s3Dao.createMultipartUpload(s3DestinationCommand.s3Url)
 				}
 				is Next -> {
-					s3Dao.uploadPart(partList.size + 1, multipartUploadResponse, transfer.minSizeBuffer())
+					val part = s3Dao.uploadPart(partList.size + 1, multipartUploadResponse, transfer.toByteBuffer())
+					partList.add(part)
 				}
 				is Complete -> {
 					s3Dao.completeMultipartUpload(partList, multipartUploadResponse)
