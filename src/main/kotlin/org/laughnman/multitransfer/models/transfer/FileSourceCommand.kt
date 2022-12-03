@@ -17,7 +17,7 @@ class FileSourceCommand : AbstractCommand() {
 	lateinit var filePaths: Array<Path>
 
 	@Option(names = ["-b", "--buffer-size"], converter = [ChunkSizeConverter::class],
-		description = ["The size of the buffer. Default is 4KB. Format is in <numeric size>B|KB|MB|GB|TB."])
-	var bufferSize = ChunkSize(4, ChunkSizeUnit.KB)
+		description = ["The size of the buffer. Default is 5MB. Format is in <numeric size>B|KB|MB|GB|TB."])
+	var bufferSize = ChunkSize(5, ChunkSizeUnit.MB)
 
 }

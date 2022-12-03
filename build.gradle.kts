@@ -20,7 +20,7 @@ repositories {
 
 dependencies {
 	implementation(kotlin("stdlib"))
-	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.4")
 
 	implementation("io.insert-koin:koin-core:$koinVersion")
 	implementation("info.picocli:picocli:4.6.2")
@@ -28,8 +28,7 @@ dependencies {
 	implementation("io.ktor:ktor-client-cio:$ktorVersion")
 	implementation("io.ktor:ktor-client-jackson:$ktorVersion")
 
-	implementation("software.amazon.awssdk:s3:2.17.129")
-	implementation("software.amazon.awssdk:apache-client:2.17.129")
+	implementation("software.amazon.awssdk:s3:2.18.28")
 
 	implementation("ch.qos.logback:logback-classic:1.2.7")
 	implementation("io.github.microutils:kotlin-logging-jvm:2.0.11")
