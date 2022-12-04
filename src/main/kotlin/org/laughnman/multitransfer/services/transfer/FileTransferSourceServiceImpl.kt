@@ -18,8 +18,7 @@ private val logger = KotlinLogging.logger {}
 class FileTransferSourceServiceImpl(private val command: FileSourceCommand, private val fileDao: FileDao) : TransferSourceService {
 
 	private fun buildFlow(metaInfo: MetaInfo, path: Path): Flow<Transfer> = flow {
-		logger.debug { "Calling buildSequence path: $path" }
-
+		logger.info { "Reading file $path." }
 		emit(Start(metaInfo))
 
 		try {

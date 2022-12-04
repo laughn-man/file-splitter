@@ -24,12 +24,11 @@ class FileTransferDestinationServiceImpl(private val command: FileDestinationCom
 				when (transfer) {
 					is Start -> {
 						val metaInfo = transfer.metaInfo
-						logger.debug { "Starting file writing metaInfo: $metaInfo" }
 						val path = if (command.path.isDirectory()) command.path.resolve(metaInfo.fileName) else command.path
+						logger.info { "Writing to file $path." }
 						fout = fileDao.openForWrite(path.toFile())
 					}
 					is Next -> {
-						logger.trace { "Writing out transferInfo: $transfer" }
 						fout.write(transfer.buffer, 0, transfer.bytesRead)
 					}
 					else -> fout.close()

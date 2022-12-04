@@ -14,6 +14,8 @@ fun String.toS3Url(): S3Url {
 
 data class S3Url(val bucket: String, val key: String) {
 
+	fun isFolder(): Boolean = key.isEmpty() || key.endsWith("/")
+
 	operator fun plus(additionalKey: String): S3Url = S3Url(bucket, key + additionalKey)
 
 	override fun toString(): String = "s3://$bucket/$key"

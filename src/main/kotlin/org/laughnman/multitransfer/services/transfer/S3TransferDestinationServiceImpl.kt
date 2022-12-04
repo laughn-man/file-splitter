@@ -9,7 +9,7 @@ import org.laughnman.multitransfer.utilities.BufferManager
 import software.amazon.awssdk.services.s3.model.CompletedPart
 import software.amazon.awssdk.services.s3.model.CreateMultipartUploadResponse
 
-const val MULTIPART_UPLOAD_SIZE_THRESHOLD = 10_000_000
+const val MULTIPART_UPLOAD_SIZE_THRESHOLD = 10_485_760
 
 private val logger = KotlinLogging.logger {}
 
@@ -26,15 +26,17 @@ class S3TransferDestinationServiceImpl(private val s3DestinationCommand: S3Desti
 		return { transfer ->
 			when(transfer) {
 				is Start -> {
-					logger.debug { "Starting uploaded metaInfo:${transfer.metaInfo}" }
-
-					s3Url = if (s3DestinationCommand.s3Url.key.isEmpty()) {
+					s3Url = if (s3DestinationCommand.s3Url.isFolder()) {
 						s3DestinationCommand.s3Url + transfer.metaInfo.fileName
 					} else {
 						s3DestinationCommand.s3Url
 					}
 
+					logger.info { "Writing to S3 key $s3Url." }
+
 					doMultiPartUpload = transfer.metaInfo.fileSize >= MULTIPART_UPLOAD_SIZE_THRESHOLD
+
+					logger.debug { "Performing multipart upload: $doMultiPartUpload." }
 
 					if (doMultiPartUpload) {
 						multipartUploadResponse = s3Dao.createMultipartUploadAsync(s3Url).await()
@@ -49,7 +51,6 @@ class S3TransferDestinationServiceImpl(private val s3DestinationCommand: S3Desti
 					}
 				}
 				is Complete -> {
-					logger.debug { "Received Complete message. bufferManager: ${bufferManager.buffer.remaining()}" }
 					if (doMultiPartUpload) {
 						s3Dao.completeMultipartUploadAsync(partList, multipartUploadResponse).await()
 					}

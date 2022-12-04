@@ -46,7 +46,7 @@ class S3TransferSourceServiceImpl(private val command: S3SourceCommand, private 
 	override fun read() = flow {
 		command.s3Urls.forEach { s3Url ->
 			// If processing a directory we need to list each key first.
-			if (s3Url.key.isEmpty()) {
+			if (s3Url.isFolder()) {
 				var response = s3Dao.listObjectsAsync(s3Url).await()
 				processS3List(this, response)
 
