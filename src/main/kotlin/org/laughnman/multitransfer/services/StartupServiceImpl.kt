@@ -1,15 +1,15 @@
 package org.laughnman.multitransfer.services
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
 import mu.KotlinLogging
 import org.laughnman.multitransfer.models.*
 import org.laughnman.multitransfer.models.transfer.*
+import org.laughnman.multitransfer.services.transfer.SourceReader
 import org.laughnman.multitransfer.services.transfer.TransferDestinationService
 import org.laughnman.multitransfer.utilities.TransferMonitor
 import picocli.CommandLine
+import java.nio.ByteBuffer
 import kotlin.system.exitProcess
-import kotlin.time.ExperimentalTime
 
 private val logger = KotlinLogging.logger {}
 
@@ -28,37 +28,42 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 		fileSplitterService.combineFiles(command)
 	}
 
-	@OptIn(ExperimentalTime::class)
-	private fun CoroutineScope.buildJob(transferDestinationService: TransferDestinationService,
-											 flow: Flow<Transfer>): Job {
+	private fun CoroutineScope.buildJob(bufferSize: ChunkSize, transferDestinationService: TransferDestinationService,
+											 sourceReader: SourceReader): Job {
 		val job = launch {
 
-			var metaInfo: MetaInfo? = null
+			lateinit var metaInfo: MetaInfo
 			val transferMonitor = TransferMonitor()
 
-			val block = transferDestinationService.write()
-			flow.collect { transfer ->
+			val destinationWriter = transferDestinationService.write()
+			val buffer = ByteBuffer.allocateDirect(bufferSize.toBytes().toInt())
+
+			sourceReader(buffer).collect { transfer ->
 				when (transfer) {
 					is Start -> {
 						metaInfo = transfer.metaInfo
 						transferMonitor.start()
-						logger.info { "${transfer.metaInfo.fileName}: Starting transfer job." }
-						block(transfer)
+						logger.info { "${metaInfo.fileName}: Starting transfer job." }
+						destinationWriter(buffer, transfer)
 					}
 					is Next -> {
-						block(transfer)
-						transferMonitor.addTransferRecord(transfer.bytesRead)
-						logger.info { "${transfer.metaInfo.fileName}: Transferred ${transfer.bytesRead} at ${transferMonitor.calculateMegaBytesPerSecond()} MB/s." }
+						// Reset the buffer so it is ready for reading.
+						buffer.flip()
+						destinationWriter(buffer, transfer)
+						transferMonitor.addTransferRecord(buffer.position())
+						logger.info { "${metaInfo.fileName}: Transferred ${buffer.position()} at ${transferMonitor.calculateMegaBytesPerSecond()} MB/s." }
+						// Clear out the buffer so it is ready to be written to again.
+						buffer.clear()
 					}
 					is Complete -> {
-						block(transfer)
+						destinationWriter(buffer, transfer)
 						transferMonitor.stop()
-						logger.info { "${transfer.metaInfo.fileName}: Finishing transfer job." }
+						logger.info { "${metaInfo.fileName}: Finishing transfer job." }
 					}
 					is Error -> {
-						block(transfer)
+						destinationWriter(buffer, transfer)
 						transferMonitor.stop()
-						logger.error(transfer.exception) { "${transfer.metaInfo.fileName}: Exception occurred in transfer job." }
+						logger.error(transfer.exception) { "${metaInfo.fileName}: Exception occurred in transfer job." }
 					}
 				}
 			}
@@ -67,7 +72,7 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 				"$hours:$minutes:$seconds.$nanoseconds"
 			}
 
-			logger.info { "Transfer job for file ${metaInfo!!.fileName} complete, runtime $timeStr at ${transferMonitor.calculateTotalMegaBytesPerSecond()} MB/s." }
+			logger.info { "Transfer job for file ${metaInfo.fileName} complete, runtime $timeStr at ${transferMonitor.calculateTotalMegaBytesPerSecond()} MB/s." }
 		}
 
 		return job
@@ -85,7 +90,7 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 
 			val processBuffer = ArrayList<Job>(transferCommand.parallelism)
 
-			transferSourceService.read().collect { flow ->
+			transferSourceService.read().collect { sourceReader ->
 				// If the process buffer is full then loop until a job finishes.
 				while (processBuffer.size == transferCommand.parallelism) {
 					// Wait for a bit to see if a job frees up.
@@ -100,7 +105,7 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 					}
 				}
 
-				val job = buildJob(transferDestinationService, flow)
+				val job = buildJob(transferCommand.bufferSize, transferDestinationService, sourceReader)
 
 				// Add the job to the process buffer.
 				processBuffer.add(job)

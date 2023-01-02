@@ -7,31 +7,30 @@ import org.laughnman.multitransfer.dao.FileDao
 import org.laughnman.multitransfer.models.transfer.FileDestinationCommand
 import org.laughnman.multitransfer.models.transfer.Next
 import org.laughnman.multitransfer.models.transfer.Start
-import org.laughnman.multitransfer.models.transfer.Transfer
-import java.io.OutputStream
+import java.nio.channels.WritableByteChannel
 import kotlin.io.path.isDirectory
 
 private val logger = KotlinLogging.logger {}
 
 class FileTransferDestinationServiceImpl(private val command: FileDestinationCommand, private val fileDao: FileDao) : TransferDestinationService {
 
-	override suspend fun write(): suspend (Transfer) -> Unit {
+	override suspend fun write(): DestinationWriter {
 
-		lateinit var fout: OutputStream
+		lateinit var channel: WritableByteChannel
 
-		return { transfer ->
+		return { buffer, transfer ->
 			withContext(Dispatchers.IO) {
 				when (transfer) {
 					is Start -> {
 						val metaInfo = transfer.metaInfo
 						val path = if (command.path.isDirectory()) command.path.resolve(metaInfo.fileName) else command.path
 						logger.info { "Writing to file $path." }
-						fout = fileDao.openForWrite(path.toFile())
+						channel = fileDao.openWriteChannel(path.toFile())
 					}
 					is Next -> {
-						fout.write(transfer.buffer, 0, transfer.bytesRead)
+						channel.write(buffer)
 					}
-					else -> fout.close()
+					else -> channel.close()
 				}
 			}
 		}

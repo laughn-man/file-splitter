@@ -1,11 +1,10 @@
 package org.laughnman.multitransfer.services.transfer
 
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flow
 import org.laughnman.multitransfer.dao.ArtifactoryDao
 import org.laughnman.multitransfer.models.transfer.*
 import org.laughnman.multitransfer.utilities.findFileName
-import java.lang.Exception
 
 private const val SUSPEND_TIME = 100L
 
@@ -16,27 +15,35 @@ class ArtifactoryTransferSourceServiceImpl(private val command: ArtifactorySourc
 		return MetaInfo(fileName = filePath.findFileName(), fileSize = fileInfo.size)
 	}
 
-	private suspend fun buildFlow(metaInfo: MetaInfo, filePath: String) = flow {
-		artifactoryDao.downloadArtifact(command.url, filePath, command.userName, command.exclusive.password, command.exclusive.token) { channel ->
-			emit(Start(metaInfo))
+	private suspend fun buildFlow(metaInfo: MetaInfo, filePath: String): SourceReader = { buffer ->
+		flow {
+			artifactoryDao.downloadArtifact(command.url, filePath, command.userName, command.exclusive.password, command.exclusive.token) { channel ->
+				emit(Start(metaInfo))
 
-			try {
-				val buffer = ByteArray(command.bufferSize.toBytes().toInt())
-
-				while (!channel.isClosedForRead) {
-					val readLength = channel.readAvailable(buffer, 0, buffer.size)
-
-					if (readLength == 0) {
-						delay(SUSPEND_TIME)
-					} else if (readLength > 0) {
-						emit(Next(metaInfo, buffer, readLength))
+				try {
+					while (!channel.isClosedForRead) {
+						// Read all available bytes into the buffer.
+						val bytesRead = channel.readAvailable(buffer)
+						// If the buffer is full emit it for reading.
+						if (!buffer.hasRemaining()) {
+							emit(Next)
+						}
+						// If no bytes are read then suspend for a little bit.
+						if (bytesRead == 0) {
+							delay(SUSPEND_TIME)
+						}
 					}
-				}
 
-				emit(Complete(metaInfo))
-			}
-			catch (e: Exception) {
-				emit(Error(metaInfo, e))
+					// If there is anything left in the buffer do one last Next call.
+					if (buffer.position() > 0) {
+						emit(Next)
+					}
+
+					emit(Complete)
+				}
+				catch (e: Exception) {
+					emit(Error(e))
+				}
 			}
 		}
 	}

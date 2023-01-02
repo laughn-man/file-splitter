@@ -11,28 +11,29 @@ private val logger = KotlinLogging.logger {}
 
 class ArtifactoryTransferDestinationServiceImpl(private val command: ArtifactoryDestinationCommand, private val artifactoryDao: ArtifactoryDao) : TransferDestinationService {
 
-	override suspend fun write(): suspend (Transfer) -> Unit {
+	override suspend fun write(): DestinationWriter {
 
-		lateinit var buffer: ByteBuffer
+		lateinit var transferBuffer: ByteBuffer
+		lateinit var metaInfo: MetaInfo
 
-		return { transfer ->
+		return { buffer, transfer ->
 			when(transfer) {
 				is Start -> {
-					logger.debug { "Calling write with metaInfo: ${transfer.metaInfo}" }
-					buffer = ByteBuffer.allocate(transfer.metaInfo.fileSize.toInt())
+					metaInfo = transfer.metaInfo
+					transferBuffer = ByteBuffer.allocate(transfer.metaInfo.fileSize.toInt())
 				}
 				is Next -> {
-					buffer.put(transfer.buffer, 0, transfer.bytesRead)
+					transferBuffer.put(buffer)
 				}
 				is Complete -> {
-					val filePath = if (command.filePath.endsWith("/")) "${command.filePath}${transfer.metaInfo.fileName}" else command.filePath
-					val bufferArr = buffer.array()
+					val filePath = if (command.filePath.endsWith("/")) "${command.filePath}${metaInfo.fileName}" else command.filePath
+					val bufferArr = transferBuffer.array()
 					try {
 						artifactoryDao.deployArtifactWithChecksum(command.url, filePath, bufferArr, command.userName, command.exclusive.password, command.exclusive.token)
 					}
 					catch (e: ClientRequestException) {
 						if (e.response.status == HttpStatusCode.NotFound) {
-							logger.info { "Cached file not found for ${transfer.metaInfo.fileName}, uploading new version." }
+							logger.info { "Cached file not found for ${metaInfo.fileName}, uploading new version." }
 							artifactoryDao.deployArtifact(command.url, filePath, bufferArr, command.userName, command.exclusive.password, command.exclusive.token)
 						}
 						else {

@@ -1,6 +1,5 @@
 package org.laughnman.multitransfer.services.transfer
 
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.future.await
@@ -15,24 +14,26 @@ class S3TransferSourceServiceImpl(private val command: S3SourceCommand, private 
 
 	private fun buildMetaInfo(s3Url: S3Url, size: Long) = MetaInfo(fileName = s3Url.key.findFileName(), fileSize = size)
 
-	private fun buildFlow(metaInfo: MetaInfo, s3Url: S3Url) = flow {
-		try {
-			s3Dao.getObjectPublisherAsync(s3Url).await().use { oin ->
-				emit(Start(metaInfo))
+	private fun buildFlow(metaInfo: MetaInfo, s3Url: S3Url): SourceReader = { buffer ->
+		flow {
+			try {
+				s3Dao.getObjectPublisherAsync(s3Url).await().use { oin ->
+					emit(Start(metaInfo))
 
-				oin.readAsSequence(command.bufferSize.toBytes().toInt()).forEach { (readLength, buffer) ->
-					emit(Next(metaInfo, buffer, readLength))
+					oin.readAsSequence(buffer.capacity()).forEach { (readLength, byteArr) ->
+						buffer.put(byteArr, 0, readLength)
+						emit(Next)
+					}
+
+					emit(Complete)
 				}
-
-				emit(Complete(metaInfo))
+			} catch (e: Exception) {
+				emit(Error(e))
 			}
-		}
-		catch (e: Exception) {
-			emit(Error(metaInfo, e))
 		}
 	}
 
-	private suspend fun processS3List(flowCollector: FlowCollector<Flow<Transfer>>, response: ListObjectsV2Response) {
+	private suspend fun processS3List(flowCollector: FlowCollector<SourceReader>, response: ListObjectsV2Response) {
 		response.contents()
 			// Remove any folder only keys.
 			.filterNot { it.key().isEmpty() }
