@@ -26,7 +26,7 @@ class ArtifactoryTransferSourceServiceImpl(private val command: ArtifactorySourc
 						val bytesRead = channel.readAvailable(buffer)
 						// If the buffer is full emit it for reading.
 						if (!buffer.hasRemaining()) {
-							emit(Next)
+							emit(BufferReady)
 						}
 						// If no bytes are read then suspend for a little bit.
 						if (bytesRead == 0) {
@@ -34,9 +34,9 @@ class ArtifactoryTransferSourceServiceImpl(private val command: ArtifactorySourc
 						}
 					}
 
-					// If there is anything left in the buffer do one last Next call.
+					// If there is anything left in the buffer do one last BufferReady call.
 					if (buffer.position() > 0) {
-						emit(Next)
+						emit(BufferReady)
 					}
 
 					emit(Complete)

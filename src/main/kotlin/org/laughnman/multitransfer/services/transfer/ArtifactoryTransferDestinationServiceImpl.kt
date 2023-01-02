@@ -22,7 +22,7 @@ class ArtifactoryTransferDestinationServiceImpl(private val command: Artifactory
 					metaInfo = transfer.metaInfo
 					transferBuffer = ByteBuffer.allocate(transfer.metaInfo.fileSize.toInt())
 				}
-				is Next -> {
+				is BufferReady -> {
 					transferBuffer.put(buffer)
 				}
 				is Complete -> {

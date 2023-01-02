@@ -20,7 +20,7 @@ class FileTransferSourceServiceImpl(private val command: FileSourceCommand, priv
 			try {
 				fileDao.openReadChannel(path.toFile()).use { channel ->
 					while (channel.read(buffer) > 0) {
-						emit(Next)
+						emit(BufferReady)
 					}
 					emit(Complete)
 				}

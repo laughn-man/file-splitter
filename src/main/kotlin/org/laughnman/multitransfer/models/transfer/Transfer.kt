@@ -8,5 +8,5 @@ data class Start(val metaInfo: MetaInfo) : Transfer
 
 data class Error(val exception: Exception) : Transfer
 
-object Next : Transfer
+object BufferReady : Transfer
 

@@ -1,23 +1,27 @@
 package org.laughnman.multitransfer.utilities
 
+import mu.KotlinLogging
+import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.DurationUnit
 
 private const val NO_TIME = -1L
 
-private const val BYTE_TO_MEGABYTE_CONVERSION = 1_000_000
+private const val BYTE_TO_MEGABYTE_CONVERSION = 1_048_576
 
 private data class TransferRecord(
 	val time: Long,
 	val bytesTransferred: Int
 )
 
+private val logger = KotlinLogging.logger {}
 
-class TransferMonitor {
+class TransferMonitor(private val fileName: String) {
 
 	private var startTime: Long = NO_TIME
 	private var finishTime: Long = NO_TIME
 
-	private var transferRecords: MutableList<TransferRecord> = ArrayList()
+	private var transferTimes = ArrayDeque<TransferRecord>()
 
 	fun start() {
 		startTime = System.nanoTime()
@@ -27,30 +31,36 @@ class TransferMonitor {
 		finishTime = System.nanoTime()
 	}
 
-	fun addTransferRecord(bytesTransferred: Int) {
-		transferRecords.add(TransferRecord(System.nanoTime(), bytesTransferred))
+	fun addTime(bytes: Int) {
+		transferTimes.addFirst(TransferRecord(System.nanoTime(), bytes))
 	}
 
-	fun calculateElapsedTime() = if (transferRecords.size == 1) {
-		(transferRecords.last().time - startTime).nanoseconds
+	private fun calculateElapsedTime() = if (transferTimes.size == 1) {
+			(transferTimes.first().time - startTime).nanoseconds
+		} else {
+			(transferTimes.first().time - transferTimes[1].time).nanoseconds
+		}
+
+	private fun calculateMegaBytesPerSecond(): Double {
+		val time = calculateElapsedTime().toDouble(DurationUnit.SECONDS)
+		val bytesTransferred = transferTimes.first().bytesTransferred
+
+		return (bytesTransferred / BYTE_TO_MEGABYTE_CONVERSION / time * 100.0).roundToInt() / 100.0
 	}
-	else {
-		(transferRecords.last().time - transferRecords[transferRecords.size - 2].time).nanoseconds
+
+	private fun calculateTotalRunTime() = (finishTime - startTime).nanoseconds
+
+	fun printTransferMessage() {
+		val bytesTransferred = (transferTimes.first().bytesTransferred / BYTE_TO_MEGABYTE_CONVERSION.toDouble() * 100.0).roundToInt() / 100.0
+
+		logger.info { "$fileName: Transferred $bytesTransferred MB at ${calculateMegaBytesPerSecond()} MB/s." }
 	}
 
-	fun calculateMegaBytesPerSecond(): Double {
-		val time = calculateElapsedTime().inWholeSeconds
-		val bytesTransferred = transferRecords.last().bytesTransferred
+	fun printTotalTransferMessage() {
+		val timeStr = calculateTotalRunTime().toComponents { hours, minutes, seconds, nanoseconds ->
+			"$hours:$minutes:$seconds.$nanoseconds"
+		}
 
-		return (bytesTransferred / BYTE_TO_MEGABYTE_CONVERSION) / time.toDouble()
-	}
-
-	fun calculateTotalRunTime() = (finishTime - startTime).nanoseconds
-
-	fun calculateTotalMegaBytesPerSecond(): Double {
-		val time = calculateTotalRunTime().inWholeSeconds
-		val bytesTransferred = transferRecords.sumOf { it.bytesTransferred.toLong() }
-
-		return (bytesTransferred / BYTE_TO_MEGABYTE_CONVERSION) / time.toDouble()
+		logger.info { "Transfer job for file $fileName complete, total runtime $timeStr." }
 	}
 }

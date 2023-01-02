@@ -22,7 +22,7 @@ class S3TransferSourceServiceImpl(private val command: S3SourceCommand, private 
 
 					oin.readAsSequence(buffer.capacity()).forEach { (readLength, byteArr) ->
 						buffer.put(byteArr, 0, readLength)
-						emit(Next)
+						emit(BufferReady)
 					}
 
 					emit(Complete)

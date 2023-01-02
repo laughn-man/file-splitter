@@ -6,6 +6,7 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.core.ResponseInputStream
+import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model.*
@@ -20,6 +21,7 @@ interface S3Dao {
 		fun fromCommand(s3Command: AbstractS3Command): S3Dao {
 
 			val s3Builder = S3AsyncClient.builder()
+				.httpClientBuilder(NettyNioAsyncHttpClient.builder())
 
 			if (s3Command.region.isNotBlank()) {
 				s3Builder.region(Region.of(s3Command.region))

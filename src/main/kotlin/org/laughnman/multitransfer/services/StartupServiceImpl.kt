@@ -33,7 +33,7 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 		val job = launch {
 
 			lateinit var metaInfo: MetaInfo
-			val transferMonitor = TransferMonitor()
+			lateinit var transferMonitor: TransferMonitor
 
 			val destinationWriter = transferDestinationService.write()
 			val buffer = ByteBuffer.allocateDirect(bufferSize.toBytes().toInt())
@@ -42,18 +42,20 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 				when (transfer) {
 					is Start -> {
 						metaInfo = transfer.metaInfo
+						transferMonitor = TransferMonitor(metaInfo.fileName)
 						transferMonitor.start()
 						logger.info { "${metaInfo.fileName}: Starting transfer job." }
 						destinationWriter(buffer, transfer)
 					}
-					is Next -> {
+					is BufferReady -> {
+						val bytesRead = buffer.position()
 						// Reset the buffer so it is ready for reading.
 						buffer.flip()
 						destinationWriter(buffer, transfer)
-						transferMonitor.addTransferRecord(buffer.position())
-						logger.info { "${metaInfo.fileName}: Transferred ${buffer.position()} at ${transferMonitor.calculateMegaBytesPerSecond()} MB/s." }
+						transferMonitor.addTime(bytesRead)
 						// Clear out the buffer so it is ready to be written to again.
 						buffer.clear()
+						transferMonitor.printTransferMessage()
 					}
 					is Complete -> {
 						destinationWriter(buffer, transfer)
@@ -68,11 +70,7 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 				}
 			}
 
-			val timeStr = transferMonitor.calculateTotalRunTime().toComponents { hours, minutes, seconds, nanoseconds ->
-				"$hours:$minutes:$seconds.$nanoseconds"
-			}
-
-			logger.info { "Transfer job for file ${metaInfo.fileName} complete, runtime $timeStr at ${transferMonitor.calculateTotalMegaBytesPerSecond()} MB/s." }
+			transferMonitor.printTotalTransferMessage()
 		}
 
 		return job

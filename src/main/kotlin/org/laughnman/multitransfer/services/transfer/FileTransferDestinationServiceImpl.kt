@@ -5,7 +5,7 @@ import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import org.laughnman.multitransfer.dao.FileDao
 import org.laughnman.multitransfer.models.transfer.FileDestinationCommand
-import org.laughnman.multitransfer.models.transfer.Next
+import org.laughnman.multitransfer.models.transfer.BufferReady
 import org.laughnman.multitransfer.models.transfer.Start
 import java.nio.channels.WritableByteChannel
 import kotlin.io.path.isDirectory
@@ -27,7 +27,7 @@ class FileTransferDestinationServiceImpl(private val command: FileDestinationCom
 						logger.info { "Writing to file $path." }
 						channel = fileDao.openWriteChannel(path.toFile())
 					}
-					is Next -> {
+					is BufferReady -> {
 						channel.write(buffer)
 					}
 					else -> channel.close()

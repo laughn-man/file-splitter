@@ -48,7 +48,7 @@ class S3TransferDestinationServiceImpl(private val s3DestinationCommand: S3Desti
 						multipartUploadResponse = s3Dao.createMultipartUploadAsync(s3Url).await()
 					}
 				}
-				is Next -> {
+				is BufferReady -> {
 					if (doMultiPartUpload) {
 						val part = s3Dao.uploadPartAsync(partList.size + 1, multipartUploadResponse, buffer).await()
 						partList.add(part)
