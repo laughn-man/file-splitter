@@ -7,10 +7,11 @@ import picocli.CommandLine.Option
 abstract class AbstractS3Command : AbstractCommand() {
 
 	class Access {
-		@Option(names = ["--access-key"], required = true, description = ["AWS access key."])
+		@Option(names = ["--access-key"], required = true, description = ["AWS access key.", "Profile access key will be used if not provided."])
 		var accessKey: String = ""
 
-		@Option(names = ["--access-secret"], required = true, interactive = true, arity = "0..1", description = ["AWS access key secret."])
+		@Option(names = ["--access-secret"], required = true, interactive = true, arity = "0..1", description = ["AWS access key secret.",
+		"Profile access key secret will be used if not provided."])
 		var accessSecret: String = ""
 	}
 

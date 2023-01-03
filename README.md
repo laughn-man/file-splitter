@@ -57,7 +57,8 @@ The chunk will be named the same as the source file with a _###### number on the
 
 #### Options
 
-split has the following command line options.
+Split has the following command line options.
+
 * -d, --delete-original: Optional. Deletes source file after a successful split. Defaults to off.
 * -s, --size: Optional. The maximum size of each chunk. The format is in \<numeric size\>B|KB|MB|GB|TB. Defaults to 100MB. 
 * path: Required. The path to the file to be split up.
@@ -102,30 +103,76 @@ Transfer uses prebuilt source and destionation sub commands to transfer files fr
 
 ### Options
 
-* -p, --parallelism: Optional. Default 1. How many transfers to run in parallel. 
+* -p, --parallelism: Optional. Default 1. How many transfers to run in parallel.
+* -b, --buffer-size: Optional. The size of the buffer. Default is 4KB. Format is in B|KB|MB|GB|TB. 
 
-### File
 
-The file subcommand type is responsible for transferring files to and from the local file system.  
-
-#### src-file
+### src-file
 
 Transfers files from the local file system.
 
-##### Options
+#### Options
 
-* -b, --buffer-size: Optional. The size of the buffer. Default is 4KB. Format is in <numeric size>B|KB|MB|GB|TB.
 * filePaths: Required. List of files to be read from. Shell glob pattern can be used to select multiple files.
 
-#### dest-file
+### dest-file
 
 Transfers files to the local file system.
 
-##### Options
+#### Options
 
 * path: Required. Path to transfer files into. If the path is a directory the files will be placed inside of it.
 
-### Artifactory
+### src-artifactory
 
-Transfer files from/to a [JFrog Artifactory](https://jfrog.com/artifactory/) system. 
+Transfers a file from Artifactory.
 
+#### Options
+
+* --url: Required. The base Artifactory URL. Should be the base of the Artifactory URL, not including the repo.
+* filePaths: Required. File paths in artifactory. These should start at the repo name. If a file path ends in / it will be treated as a directory and all the files in the directory will be transferred.
+* insecure: Optional. When set multi-transfer will ignore the authenticity of Artifactory's SSL certs and assume they are genuine. Transfers are still encrypted in transit even though the source or destination is not verified. This should only be used when you are confident of the endpoint you are connecting to.
+* -p, --password: Optional. The Artifactory user password. If the value is left blank the password will be requested on STDIN. Either password or token must be passed.
+* --request-timeout:  Optional. The timeout in seconds to wait on the request. Defaults to no timeout.
+* -t, --token:  Optional. The Artifactory token. If the value is left blank the token will be requested on STDIN. Either password or token must be passed.
+* -u, --user: Optional. The Artifactory user name.
+
+### dest-artifactory
+
+Transfers a file to Artifactory.
+
+#### Options
+
+* --url: Required. The base Artifactory URL. Should be the base of the Artifactory URL, not including the repo.
+* filePath: Required. Destination file path in artifactory. This should start at the repo name.
+* insecure: Optional. When set multi-transfer will ignore the authenticity of Artifactory's SSL certs and assume they are genuine. Transfers are still encrypted in transit even though the source or destination is not verified. This should only be used when you are confident of the endpoint you are connecting to.
+* -p, --password: Optional. The Artifactory user password. If the value is left blank the password will be requested on STDIN. Either password or token must be passed.
+* --request-timeout:  Optional. The timeout in seconds to wait on the request. Defaults to no timeout.
+* -t, --token:  Optional. The Artifactory token. If the value is left blank the token will be requested on STDIN. Either password or token must be passed.
+* -u, --user: Optional. The Artifactory user name.
+
+### src-s3
+
+Transfers a file from AWS S3.
+
+#### Options
+
+* s3Urls: Required. List of S3 url entries to read from. Entries must start with s3://
+* access-key: Optional. AWS access key. Profile access key will be used if not provided. Profile access key secret will be used if not provided.
+* access-secret: Optional. AWS access key secret.
+* endpoint: Optional. Overrides the default AWS endpoint.
+* -p, --profile: Optional. The AWS profile to use. The default profile is used if not passed.
+* -r, --region: Optional. The AWS region. The default region is used if not passed.
+
+### dest-s3
+
+Transfers a file to AWS S3.
+
+#### Options
+
+* s3Url: Required. S3 url to write to. Entry must start with s3://
+* access-key: Optional. AWS access key. Profile access key will be used if not provided. Profile access key secret will be used if not provided.
+* access-secret: Optional. AWS access key secret.
+* endpoint: Optional. Overrides the default AWS endpoint.
+* -p, --profile: Optional. The AWS profile to use. The default profile is used if not passed.
+* -r, --region: Optional. The AWS region. The default region is used if not passed.
