@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "org.laughnman"
-version = "0.2.2"
+version = "0.3.0"
 
 val koinVersion = "3.1.3"
 val kotestVersion = "4.6.3"
@@ -20,13 +20,16 @@ repositories {
 
 dependencies {
 	implementation(kotlin("stdlib"))
-	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.4")
 
 	implementation("io.insert-koin:koin-core:$koinVersion")
 	implementation("info.picocli:picocli:4.6.2")
 
 	implementation("io.ktor:ktor-client-cio:$ktorVersion")
 	implementation("io.ktor:ktor-client-jackson:$ktorVersion")
+
+	implementation("software.amazon.awssdk:s3:2.19.8")
+	implementation("software.amazon.awssdk:netty-nio-client:2.19.8")
 
 	implementation("ch.qos.logback:logback-classic:1.2.7")
 	implementation("io.github.microutils:kotlin-logging-jvm:2.0.11")

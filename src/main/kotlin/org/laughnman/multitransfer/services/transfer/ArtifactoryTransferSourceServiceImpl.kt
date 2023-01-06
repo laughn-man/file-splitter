@@ -1,11 +1,9 @@
 package org.laughnman.multitransfer.services.transfer
 
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flow
 import org.laughnman.multitransfer.dao.ArtifactoryDao
-import org.laughnman.multitransfer.models.transfer.ArtifactorySourceCommand
-import org.laughnman.multitransfer.models.transfer.MetaInfo
-import org.laughnman.multitransfer.models.transfer.TransferInfo
+import org.laughnman.multitransfer.models.transfer.*
 import org.laughnman.multitransfer.utilities.findFileName
 
 private const val SUSPEND_TIME = 100L
@@ -17,19 +15,34 @@ class ArtifactoryTransferSourceServiceImpl(private val command: ArtifactorySourc
 		return MetaInfo(fileName = filePath.findFileName(), fileSize = fileInfo.size)
 	}
 
-	private suspend fun buildFlow(filePath: String) = flow {
-		artifactoryDao.downloadArtifact(command.url, filePath, command.userName, command.exclusive.password, command.exclusive.token) { channel ->
+	private suspend fun buildFlow(metaInfo: MetaInfo, filePath: String): SourceReader = { buffer ->
+		flow {
+			artifactoryDao.downloadArtifact(command.url, filePath, command.userName, command.exclusive.password, command.exclusive.token) { channel ->
+				emit(Start(metaInfo))
 
-			val buffer = ByteArray(command.bufferSize.toBytes().toInt())
+				try {
+					while (!channel.isClosedForRead) {
+						// Read all available bytes into the buffer.
+						val bytesRead = channel.readAvailable(buffer)
+						// If the buffer is full emit it for reading.
+						if (!buffer.hasRemaining()) {
+							emit(BufferReady)
+						}
+						// If no bytes are read then suspend for a little bit.
+						if (bytesRead == 0) {
+							delay(SUSPEND_TIME)
+						}
+					}
 
-			while (!channel.isClosedForRead) {
-				val readLength = channel.readAvailable(buffer, 0, buffer.size)
+					// If there is anything left in the buffer do one last BufferReady call.
+					if (buffer.position() > 0) {
+						emit(BufferReady)
+					}
 
-				if (readLength == 0) {
-					delay(SUSPEND_TIME)
+					emit(Complete)
 				}
-				else if (readLength > 0) {
-					emit(TransferInfo(buffer, readLength))
+				catch (e: Exception) {
+					emit(Error(e))
 				}
 			}
 		}
@@ -46,14 +59,12 @@ class ArtifactoryTransferSourceServiceImpl(private val command: ArtifactorySourc
 					.forEach { child ->
 						val filePath = "${folderInfo.repo}/${folderInfo.path}${child.uri}"
 						val metaInfo = buildMetaInfo(filePath)
-						val flow = buildFlow(filePath)
-						emit(Pair(metaInfo, flow))
+						emit(buildFlow(metaInfo, filePath))
 					}
 			}
 			else {
 				val metaInfo = buildMetaInfo(path)
-				val flow = buildFlow(path)
-				emit(Pair(metaInfo, flow))
+				emit(buildFlow(metaInfo, path))
 			}
 		}
 	}

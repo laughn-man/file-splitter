@@ -1,15 +1,9 @@
 package org.laughnman.multitransfer.services.transfer
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import mu.KotlinLogging
 import org.laughnman.multitransfer.dao.FileDao
-import org.laughnman.multitransfer.models.transfer.FileSourceCommand
-import org.laughnman.multitransfer.models.transfer.MetaInfo
-import org.laughnman.multitransfer.models.transfer.TransferInfo
-import org.laughnman.multitransfer.utilities.readAsSequence
+import org.laughnman.multitransfer.models.transfer.*
 import java.nio.file.Path
 import kotlin.io.path.fileSize
 import kotlin.io.path.name
@@ -18,20 +12,28 @@ private val logger = KotlinLogging.logger {}
 
 class FileTransferSourceServiceImpl(private val command: FileSourceCommand, private val fileDao: FileDao) : TransferSourceService {
 
-	private fun buildFlow(path: Path): Flow<TransferInfo> = flow {
-		logger.debug { "Calling buildSequence path: $path" }
+	private fun buildFlow(metaInfo: MetaInfo, path: Path): SourceReader = { buffer ->
+		flow {
+			logger.info { "Reading file $path." }
+			emit(Start(metaInfo))
 
-		fileDao.openForRead(path.toFile()).use { fin ->
-			fin.readAsSequence(command.bufferSize.toBytes().toInt()).forEach { (readLength, buffer) ->
-				emit(TransferInfo(buffer, readLength))
+			try {
+				fileDao.openReadChannel(path.toFile()).use { channel ->
+					while (channel.read(buffer) > 0) {
+						emit(BufferReady)
+					}
+					emit(Complete)
+				}
+			} catch (e: Exception) {
+				emit(Error(e))
 			}
 		}
-	}.flowOn(Dispatchers.IO)
+	}
 
 	override fun read() = flow {
 		command.filePaths.map { path ->
 			val metaInfo = MetaInfo(fileName = path.name, fileSize = path.fileSize())
-			emit(Pair(metaInfo, buildFlow(path)))
+			emit(buildFlow(metaInfo, path))
 		}
 	}
 }

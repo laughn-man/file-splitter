@@ -1,15 +1,15 @@
 package org.laughnman.multitransfer.services
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
 import mu.KotlinLogging
 import org.laughnman.multitransfer.models.*
 import org.laughnman.multitransfer.models.transfer.*
+import org.laughnman.multitransfer.services.transfer.SourceReader
 import org.laughnman.multitransfer.services.transfer.TransferDestinationService
+import org.laughnman.multitransfer.utilities.TransferMonitor
 import picocli.CommandLine
+import java.nio.ByteBuffer
 import kotlin.system.exitProcess
-import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
 
 private val logger = KotlinLogging.logger {}
 
@@ -28,32 +28,49 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 		fileSplitterService.combineFiles(command)
 	}
 
-	@OptIn(ExperimentalTime::class)
-	private fun CoroutineScope.buildJob(transferDestinationService: TransferDestinationService,
-											 metaInfo: MetaInfo,
-											 flow: Flow<TransferInfo>): Job {
+	private fun CoroutineScope.buildJob(bufferSize: ChunkSize, transferDestinationService: TransferDestinationService,
+											 sourceReader: SourceReader): Job {
 		val job = launch {
-			logger.info { "Starting transfer job for file ${metaInfo.fileName}" }
-			val elapsed = measureTime {
-				transferDestinationService.write(metaInfo, flow)
+
+			lateinit var metaInfo: MetaInfo
+			lateinit var transferMonitor: TransferMonitor
+
+			val destinationWriter = transferDestinationService.write()
+			val buffer = ByteBuffer.allocateDirect(bufferSize.toBytes().toInt())
+
+			sourceReader(buffer).collect { transfer ->
+				when (transfer) {
+					is Start -> {
+						metaInfo = transfer.metaInfo
+						transferMonitor = TransferMonitor(metaInfo.fileName)
+						transferMonitor.start()
+						logger.info { "${metaInfo.fileName}: Starting transfer job." }
+						destinationWriter(buffer, transfer)
+					}
+					is BufferReady -> {
+						val bytesRead = buffer.position()
+						// Reset the buffer so it is ready for reading.
+						buffer.flip()
+						destinationWriter(buffer, transfer)
+						transferMonitor.addTime(bytesRead)
+						// Clear out the buffer so it is ready to be written to again.
+						buffer.clear()
+						transferMonitor.printTransferMessage()
+					}
+					is Complete -> {
+						destinationWriter(buffer, transfer)
+						transferMonitor.stop()
+						logger.info { "${metaInfo.fileName}: Finishing transfer job." }
+					}
+					is Error -> {
+						destinationWriter(buffer, transfer)
+						transferMonitor.stop()
+						logger.error(transfer.exception) { "${metaInfo.fileName}: Exception occurred in transfer job." }
+					}
+				}
 			}
 
-			val timeStr = elapsed.toComponents { hours, minutes, seconds, nanoseconds ->
-				"$hours:$minutes:$seconds.$nanoseconds"
-			}
-
-			logger.info { "Transfer job for file ${metaInfo.fileName} complete, runtime $timeStr" }
-		}
-		// When complete check if the job stopped do to cancellation or error and report.
-		job.invokeOnCompletion { cause ->
-			if (cause != null) {
-				if (cause is CancellationException) {
-					logger.warn { "File ${metaInfo.fileName} transfer was cancelled, message: ${cause.message}" }
-				}
-				else {
-					logger.error(cause) { "Exception occurred while transferring ${metaInfo.fileName}" }
-				}
-			}
+			transferMonitor.printTotalTransferMessage()
 		}
 
 		return job
@@ -71,7 +88,7 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 
 			val processBuffer = ArrayList<Job>(transferCommand.parallelism)
 
-			transferSourceService.read().collect { (metaInfo, flow) ->
+			transferSourceService.read().collect { sourceReader ->
 				// If the process buffer is full then loop until a job finishes.
 				while (processBuffer.size == transferCommand.parallelism) {
 					// Wait for a bit to see if a job frees up.
@@ -86,7 +103,7 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 					}
 				}
 
-				val job = buildJob(transferDestinationService, metaInfo, flow)
+				val job = buildJob(transferCommand.bufferSize, transferDestinationService, sourceReader)
 
 				// Add the job to the process buffer.
 				processBuffer.add(job)
@@ -106,8 +123,8 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 		val combineCommand = CombineCommand()
 		val transferCommand = TransferCommand()
 
-		val transferSourceCommands = arrayOf(FileSourceCommand(), ArtifactorySourceCommand())
-		val transferDestinationCommands = arrayOf(FileDestinationCommand(), ArtifactoryDestinationCommand())
+		val transferSourceCommands = arrayOf(FileSourceCommand(), ArtifactorySourceCommand(), S3SourceCommand())
+		val transferDestinationCommands = arrayOf(FileDestinationCommand(), ArtifactoryDestinationCommand(), S3DestinationCommand())
 
 		val transferCommandLine = CommandLine(transferCommand)
 		transferSourceCommands.forEach { transferCommandLine.addSubcommand(it) }

@@ -2,8 +2,6 @@ package org.laughnman.multitransfer.dao
 
 import java.io.File
 
-private const val BUFFER_SIZE = 8192
-
 class FileDaoImpl : FileDao {
 
 	override fun getLength(file: File) = file.length()
@@ -17,4 +15,8 @@ class FileDaoImpl : FileDao {
 	override fun openForRead(file: File) = file.inputStream()
 
 	override fun openForWrite(file: File) = file.outputStream()
+
+	override fun openReadChannel(file: File) = file.inputStream().channel
+
+	override fun openWriteChannel(file: File) = file.outputStream().channel
 }
