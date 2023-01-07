@@ -41,7 +41,12 @@ dependencies {
 	testImplementation("io.mockk:mockk:1.13.2")
 }
 
-val compileKotlin: KotlinCompile by tasks
+tasks.withType<KotlinCompile>().configureEach {
+	kotlinOptions.jvmTarget = "1.8"
+}
+
+
+// val compileKotlin: KotlinCompile by tasks
 // compileKotlin.kotlinOptions.freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
 
 /*
