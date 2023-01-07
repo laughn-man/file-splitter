@@ -3,7 +3,6 @@ package org.laughnman.multitransfer.dao
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import io.ktor.content.*
 import io.ktor.http.*
 import io.ktor.utils.io.*
@@ -40,7 +39,7 @@ class ArtifactoryDaoImpl(private val client: HttpClient) : ArtifactoryDao {
 			headers {
 				append(HttpHeaders.Authorization, buildAuthHeader(user, password, token))
 			}
-		}
+		}.body()
 	}
 
 	override suspend fun getFolderInfo(url: URI, filePath: String, user: String, password: String, token: String): FolderInfo {
@@ -51,19 +50,19 @@ class ArtifactoryDaoImpl(private val client: HttpClient) : ArtifactoryDao {
 			headers {
 				append(HttpHeaders.Authorization, buildAuthHeader(user, password, token))
 			}
-		}
+		}.body()
 	}
 
 	override suspend fun downloadArtifact(url: URI, filePath: String, user: String, password: String, token: String, f: suspend (channel: ByteReadChannel) -> Unit) {
 		val normalizedUrl = url.toString().normalizePath()
 		val normalizedFilePath = filePath.normalizePath()
 
-		client.get<HttpStatement>("$normalizedUrl/$normalizedFilePath") {
+		client.prepareGet("$normalizedUrl/$normalizedFilePath") {
 			headers {
 				append(HttpHeaders.Authorization, buildAuthHeader(user, password, token))
 			}
 		}.execute {
-			f(it.receive<ByteReadChannel>())
+			f(it.body())
 		}
 	}
 
@@ -77,8 +76,8 @@ class ArtifactoryDaoImpl(private val client: HttpClient) : ArtifactoryDao {
 				append("X-Checksum-Sha256", input.sha256Hash().toHex())
 			}
 
-			body = ByteArrayContent(input)
-		}
+			setBody(ByteArrayContent(input))
+		}.body()
 	}
 
 	override suspend fun deployArtifactWithChecksum(url: URI, filePath: String, input: ByteArray, user: String,	password: String,	token: String): FileInfo {
@@ -91,6 +90,6 @@ class ArtifactoryDaoImpl(private val client: HttpClient) : ArtifactoryDao {
 				append("X-Checksum-Deploy", "true")
 				append("X-Checksum-Sha256", input.sha256Hash().toHex())
 			}
-		}
+		}.body()
 	}
 }
