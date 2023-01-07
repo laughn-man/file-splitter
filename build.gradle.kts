@@ -33,7 +33,8 @@ dependencies {
 	implementation("software.amazon.awssdk:s3:$awsVersion")
 	implementation("software.amazon.awssdk:netty-nio-client:$awsVersion")
 
-	implementation("ch.qos.logback:logback-classic:1.4.5")
+	// Do not upgrade to 1.4, it does not support Java 8.
+	implementation("ch.qos.logback:logback-classic:1.3.5")
 	implementation("io.github.microutils:kotlin-logging-jvm:3.0.4")
 
 	testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion")
@@ -44,17 +45,6 @@ dependencies {
 tasks.withType<KotlinCompile>().configureEach {
 	kotlinOptions.jvmTarget = "1.8"
 }
-
-
-// val compileKotlin: KotlinCompile by tasks
-// compileKotlin.kotlinOptions.freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
-
-/*
-java {
-	sourceCompatibility = JavaVersion.VERSION_1_8
-	targetCompatibility = JavaVersion.VERSION_1_8
-}
-*/
 
 tasks {
 	named<ShadowJar>("shadowJar") {
