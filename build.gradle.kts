@@ -3,16 +3,17 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-	kotlin("jvm") version "1.6.0"
-	id("com.github.johnrengelman.shadow") version "7.1.0"
+	kotlin("jvm") version "1.7.21"
+	id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
 group = "org.laughnman"
-version = "0.3.0"
+version = "0.3.1"
 
-val koinVersion = "3.1.3"
-val kotestVersion = "4.6.3"
-val ktorVersion = "1.6.8"
+val koinVersion = "3.3.2"
+val kotestVersion = "5.5.4"
+val ktorVersion = "2.2.1"
+val awsVersion = "2.19.8"
 
 repositories {
 	mavenCentral()
@@ -23,20 +24,21 @@ dependencies {
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.4")
 
 	implementation("io.insert-koin:koin-core:$koinVersion")
-	implementation("info.picocli:picocli:4.6.2")
+	implementation("info.picocli:picocli:4.7.0")
 
 	implementation("io.ktor:ktor-client-cio:$ktorVersion")
-	implementation("io.ktor:ktor-client-jackson:$ktorVersion")
+	implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+	implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
 
-	implementation("software.amazon.awssdk:s3:2.19.8")
-	implementation("software.amazon.awssdk:netty-nio-client:2.19.8")
+	implementation("software.amazon.awssdk:s3:$awsVersion")
+	implementation("software.amazon.awssdk:netty-nio-client:$awsVersion")
 
-	implementation("ch.qos.logback:logback-classic:1.2.7")
-	implementation("io.github.microutils:kotlin-logging-jvm:2.0.11")
+	implementation("ch.qos.logback:logback-classic:1.4.5")
+	implementation("io.github.microutils:kotlin-logging-jvm:3.0.4")
 
 	testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion")
 	testImplementation("io.kotest:kotest-framework-datatest:$kotestVersion")
-	testImplementation("io.mockk:mockk:1.12.1")
+	testImplementation("io.mockk:mockk:1.13.2")
 }
 
 val compileKotlin: KotlinCompile by tasks

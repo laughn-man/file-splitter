@@ -44,7 +44,7 @@ class FileSplitterServiceImplTest : DescribeSpec({
 		}
 
 		it("invalid file size") {
-			withData(1L, 10L) { length ->
+			this@describe.withData(1L, 10L) { length ->
 				val splitCommand = SplitCommand()
 				splitCommand.path = Paths.get("test")
 				splitCommand.chunkSize = ChunkSize(10, ChunkSizeUnit.B)

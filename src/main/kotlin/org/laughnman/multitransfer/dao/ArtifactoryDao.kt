@@ -3,8 +3,9 @@ package org.laughnman.multitransfer.dao
 import com.fasterxml.jackson.databind.DeserializationFeature
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
-import io.ktor.client.features.*
-import io.ktor.client.features.json.*
+import io.ktor.client.plugins.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.serialization.jackson.*
 import io.ktor.utils.io.*
 import mu.KotlinLogging
 import org.laughnman.multitransfer.models.artifactory.FileInfo
@@ -38,8 +39,8 @@ interface ArtifactoryDao {
 					}
 				}
 
-				install(JsonFeature) {
-					serializer = JacksonSerializer() {
+				install(ContentNegotiation) {
+					jackson {
 						configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 					}
 				}

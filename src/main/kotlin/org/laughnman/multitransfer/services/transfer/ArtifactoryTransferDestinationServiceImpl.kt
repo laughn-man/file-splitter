@@ -1,6 +1,6 @@
 package org.laughnman.multitransfer.services.transfer
 
-import io.ktor.client.features.*
+import io.ktor.client.plugins.*
 import io.ktor.http.*
 import mu.KotlinLogging
 import org.laughnman.multitransfer.dao.ArtifactoryDao
