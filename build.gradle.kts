@@ -1,6 +1,7 @@
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.util.Properties
 
 plugins {
 	kotlin("jvm") version "1.7.21"
@@ -8,7 +9,7 @@ plugins {
 }
 
 group = "org.laughnman"
-version = "0.3.1"
+version = "0.3.2"
 
 val koinVersion = "3.3.2"
 val kotestVersion = "5.5.4"
@@ -42,10 +43,6 @@ dependencies {
 	testImplementation("io.mockk:mockk:1.13.2")
 }
 
-tasks.withType<KotlinCompile>().configureEach {
-	kotlinOptions.jvmTarget = "1.8"
-}
-
 tasks {
 	named<ShadowJar>("shadowJar") {
 		archiveClassifier.set("")
@@ -58,14 +55,37 @@ tasks {
 			))
 		}
 	}
-}
 
-tasks {
+	// Create a createProperties take that will create a properties file in the resources folder.
+	register("createProperties") {
+		doLast {
+			val resourcesDir = File("$buildDir/resources/main")
+			resourcesDir.mkdirs()
+
+			File(resourcesDir, "multi-transfer.properties").outputStream().use {fout ->
+				val p = Properties()
+				p["version"] = project.version.toString()
+				p.store(fout, null)
+			}
+		}
+	}
+
+	// Enforce 1.8 on both the main and test compiles.
+	withType<KotlinCompile>().configureEach {
+		kotlinOptions.jvmTarget = "1.8"
+	}
+
+	// Have the classes task depend on createProperties.
+	classes {
+		dependsOn("createProperties")
+	}
+
+	// Have build dependon shadowJar.
 	build {
 		dependsOn(shadowJar)
 	}
-}
 
-tasks.withType<Test> {
-	useJUnitPlatform()
+	withType<Test> {
+		useJUnitPlatform()
+	}
 }
