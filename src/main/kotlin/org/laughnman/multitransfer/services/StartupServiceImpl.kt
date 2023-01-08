@@ -28,52 +28,68 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 		fileSplitterService.combineFiles(command)
 	}
 
-	private fun CoroutineScope.buildJob(bufferSize: ChunkSize, transferDestinationService: TransferDestinationService,
-											 sourceReader: SourceReader): Job {
-		val job = launch {
+	private suspend fun buildJob(bufferSize: ChunkSize, transferDestinationService: TransferDestinationService,
+											 sourceReader: SourceReader) {
+		lateinit var metaInfo: MetaInfo
+		lateinit var transferMonitor: TransferMonitor
 
-			lateinit var metaInfo: MetaInfo
-			lateinit var transferMonitor: TransferMonitor
+		logger.info { Thread.currentThread().name }
 
-			val destinationWriter = transferDestinationService.write()
-			val buffer = ByteBuffer.allocateDirect(bufferSize.toBytes().toInt())
+		val destinationWriter = transferDestinationService.write()
+		val buffer = ByteBuffer.allocateDirect(bufferSize.toBytes().toInt())
 
-			sourceReader(buffer).collect { transfer ->
-				when (transfer) {
-					is Start -> {
-						metaInfo = transfer.metaInfo
-						transferMonitor = TransferMonitor(metaInfo.fileName)
-						transferMonitor.start()
-						logger.info { "${metaInfo.fileName}: Starting transfer job." }
-						destinationWriter(buffer, transfer)
-					}
-					is BufferReady -> {
-						val bytesRead = buffer.position()
-						// Reset the buffer so it is ready for reading.
-						buffer.flip()
-						destinationWriter(buffer, transfer)
-						transferMonitor.addTime(bytesRead)
-						// Clear out the buffer so it is ready to be written to again.
-						buffer.clear()
-						transferMonitor.printTransferMessage()
-					}
-					is Complete -> {
-						destinationWriter(buffer, transfer)
-						transferMonitor.stop()
-						logger.info { "${metaInfo.fileName}: Finishing transfer job." }
-					}
-					is Error -> {
-						destinationWriter(buffer, transfer)
-						transferMonitor.stop()
-						logger.error(transfer.exception) { "${metaInfo.fileName}: Exception occurred in transfer job." }
-					}
+		sourceReader(buffer).collect { transfer ->
+			when (transfer) {
+				is Start -> {
+					metaInfo = transfer.metaInfo
+					transferMonitor = TransferMonitor(metaInfo.fileName)
+					transferMonitor.start()
+					logger.info { "${metaInfo.fileName}: Starting transfer job." }
+					destinationWriter(buffer, transfer)
+				}
+				is BufferReady -> {
+					val bytesRead = buffer.position()
+					// Reset the buffer so it is ready for reading.
+					buffer.flip()
+					destinationWriter(buffer, transfer)
+					transferMonitor.addTime(bytesRead)
+					// Clear out the buffer so it is ready to be written to again.
+					buffer.clear()
+					transferMonitor.printTransferMessage()
+				}
+				is Complete -> {
+					destinationWriter(buffer, transfer)
+					transferMonitor.stop()
+					logger.info { "${metaInfo.fileName}: Finishing transfer job." }
+				}
+				is Error -> {
+					destinationWriter(buffer, transfer)
+					transferMonitor.stop()
+					logger.error(transfer.exception) { "${metaInfo.fileName}: Exception occurred in transfer job." }
 				}
 			}
-
-			transferMonitor.printTotalTransferMessage()
 		}
 
-		return job
+		transferMonitor.printTotalTransferMessage()
+
+	}
+
+	/**
+	 * Checks to see if the processBuffer is full, if so it delays until at least 1 job has finished.
+	 */
+	private suspend fun waitForProcess(processBuffer: MutableList<Job>, maxProcesses: Int) {
+		while (processBuffer.size == maxProcesses) {
+			// Wait for a bit to see if a job frees up.
+			delay(SLEEP_TIME)
+
+			// Loop backwards so items can be removed from the list without causing issues.
+			for (i in processBuffer.indices.reversed()) {
+				val job = processBuffer[i]
+				if (job.isCompleted) {
+					processBuffer.removeAt(i)
+				}
+			}
+		}
 	}
 
 	private fun runTransfer(transferCommand: TransferCommand, sourceCommands: Array<out AbstractCommand>, destinationCommands: Array<out AbstractCommand>) {
@@ -82,31 +98,19 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 		val sourceCommand = sourceCommands.first { it.called }
 		val destinationCommand = destinationCommands.first { it.called }
 
+		val processBuffer = ArrayList<Job>(transferCommand.parallelism)
+
 		runBlocking {
 			val transferSourceService = transferFactoryService.getSourceService(sourceCommand)
 			val transferDestinationService = transferFactoryService.getDestinationService(destinationCommand)
 
-			val processBuffer = ArrayList<Job>(transferCommand.parallelism)
-
 			transferSourceService.read().collect { sourceReader ->
-				// If the process buffer is full then loop until a job finishes.
-				while (processBuffer.size == transferCommand.parallelism) {
-					// Wait for a bit to see if a job frees up.
-					delay(SLEEP_TIME)
-
-					// Loop backwards so items can be removed from the list without causing issues.
-					for (i in processBuffer.indices.reversed()) {
-						val job = processBuffer[i]
-						if (job.isCompleted) {
-							processBuffer.removeAt(i)
-						}
-					}
+				// Wait if the process buffer is full.
+				waitForProcess(processBuffer, transferCommand.parallelism)
+				// Launch a new process.
+				processBuffer += launch(Dispatchers.IO) {
+					buildJob(transferCommand.bufferSize, transferDestinationService, sourceReader)
 				}
-
-				val job = buildJob(transferCommand.bufferSize, transferDestinationService, sourceReader)
-
-				// Add the job to the process buffer.
-				processBuffer.add(job)
 			}
 
 			// Wait on the remaining jobs.
