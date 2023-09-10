@@ -23,6 +23,7 @@ interface ArtifactoryDao {
 
 		fun fromCommand(artifactoryCommand: AbstractArtifactoryCommand): ArtifactoryDao {
 			val httpClient = HttpClient(CIO) {
+				expectSuccess = true
 				engine {
 					https {
 						// Turn off the trust manager if the site is insecure.
