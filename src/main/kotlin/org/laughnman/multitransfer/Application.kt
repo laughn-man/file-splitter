@@ -12,6 +12,7 @@ import org.laughnman.multitransfer.dao.daoModule
 import org.laughnman.multitransfer.services.StartupService
 import org.laughnman.multitransfer.services.servicesModule
 import org.slf4j.LoggerFactory
+import kotlin.system.exitProcess
 
 private const val FULL_PATTERN = "%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"
 private const val SHORT_PATTERN = "%msg%n"
@@ -51,7 +52,7 @@ fun main(args: Array<String>) {
 		modules(servicesModule)
 	}
 
-	Application().startupService.run(args)
+	exitProcess(Application().startupService.run(args))
 }
 
 class Application : KoinComponent {

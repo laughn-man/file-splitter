@@ -1,11 +1,10 @@
-package org.laughnman.multitransfer.services
+package org.laughnman.multitransfer.services.transfer
 
 import org.laughnman.multitransfer.dao.ArtifactoryDao
 import org.laughnman.multitransfer.dao.FileDao
 import org.laughnman.multitransfer.dao.S3Dao
 import org.laughnman.multitransfer.models.AbstractCommand
 import org.laughnman.multitransfer.models.transfer.*
-import org.laughnman.multitransfer.services.transfer.*
 import org.laughnman.multitransfer.utilities.exceptions.UnknownCommandException
 
 class TransferFactoryServiceImpl(private val fileDao: FileDao, private val s3DaoFactory: S3Dao.Factory,
