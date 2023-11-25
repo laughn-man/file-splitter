@@ -1,22 +1,15 @@
 package org.laughnman.multitransfer.services
 
-import kotlinx.coroutines.*
 import mu.KotlinLogging
 import org.laughnman.multitransfer.models.*
 import org.laughnman.multitransfer.models.transfer.*
-import org.laughnman.multitransfer.services.transfer.SourceReader
-import org.laughnman.multitransfer.services.transfer.TransferDestinationService
-import org.laughnman.multitransfer.utilities.TransferMonitor
+import org.laughnman.multitransfer.services.transfer.TransferService
 import picocli.CommandLine
-import java.nio.ByteBuffer
-import kotlin.system.exitProcess
 
 private val logger = KotlinLogging.logger {}
 
-private const val SLEEP_TIME = 100L
-
 class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
-	private val transferFactoryService: TransferFactoryService) : StartupService {
+	private val transferService: TransferService) : StartupService {
 
 	private fun runSplit(command: SplitCommand) {
 		logger.debug { "Calling runSplit command: $command" }
@@ -28,99 +21,22 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 		fileSplitterService.combineFiles(command)
 	}
 
-	private suspend fun buildJob(bufferSize: ChunkSize, transferDestinationService: TransferDestinationService,
-											 sourceReader: SourceReader) {
-		lateinit var metaInfo: MetaInfo
-		lateinit var transferMonitor: TransferMonitor
+	private fun runTransfer(transferCommand: TransferCommand, sourceCommands: Array<out AbstractCommand>, destinationCommands: Array<out AbstractCommand>): Int {
+		logger.debug { "Call runTransfer command: $transferCommand" }
 
-		logger.info { Thread.currentThread().name }
+		val sourceCommand = sourceCommands.firstOrNull { it.called }
+		val destinationCommand = destinationCommands.firstOrNull() { it.called }
 
-		val destinationWriter = transferDestinationService.write()
-		val buffer = ByteBuffer.allocateDirect(bufferSize.toBytes().toInt())
-
-		sourceReader(buffer).collect { transfer ->
-			when (transfer) {
-				is Start -> {
-					metaInfo = transfer.metaInfo
-					transferMonitor = TransferMonitor(metaInfo.fileName)
-					transferMonitor.start()
-					logger.info { "${metaInfo.fileName}: Starting transfer job." }
-					destinationWriter(buffer, transfer)
-				}
-				is BufferReady -> {
-					val bytesRead = buffer.position()
-					// Reset the buffer so it is ready for reading.
-					buffer.flip()
-					destinationWriter(buffer, transfer)
-					transferMonitor.addTime(bytesRead)
-					// Clear out the buffer so it is ready to be written to again.
-					buffer.clear()
-					transferMonitor.printTransferMessage()
-				}
-				is Complete -> {
-					destinationWriter(buffer, transfer)
-					transferMonitor.stop()
-					logger.info { "${metaInfo.fileName}: Finishing transfer job." }
-				}
-				is Error -> {
-					destinationWriter(buffer, transfer)
-					transferMonitor.stop()
-					logger.error(transfer.exception) { "${metaInfo.fileName}: Exception occurred in transfer job." }
-				}
-			}
+		if (sourceCommand != null && destinationCommand != null) {
+			transferService.runTransfer(transferCommand, sourceCommand, destinationCommand)
+			return 0
 		}
 
-		transferMonitor.printTotalTransferMessage()
+		return 100
 
 	}
 
-	/**
-	 * Checks to see if the processBuffer is full, if so it delays until at least 1 job has finished.
-	 */
-	private suspend fun waitForProcess(processBuffer: MutableList<Job>, maxProcesses: Int) {
-		while (processBuffer.size == maxProcesses) {
-			// Wait for a bit to see if a job frees up.
-			delay(SLEEP_TIME)
-
-			// Loop backwards so items can be removed from the list without causing issues.
-			for (i in processBuffer.indices.reversed()) {
-				val job = processBuffer[i]
-				if (job.isCompleted) {
-					processBuffer.removeAt(i)
-				}
-			}
-		}
-	}
-
-	private fun runTransfer(transferCommand: TransferCommand, sourceCommands: Array<out AbstractCommand>, destinationCommands: Array<out AbstractCommand>) {
-		logger.debug { "Calling runTransfer sourceCommands: $sourceCommands, destinationCommands: $destinationCommands" }
-
-		val sourceCommand = sourceCommands.first { it.called }
-		val destinationCommand = destinationCommands.first { it.called }
-
-		val processBuffer = ArrayList<Job>(transferCommand.parallelism)
-
-		runBlocking {
-			val transferSourceService = transferFactoryService.getSourceService(sourceCommand)
-			val transferDestinationService = transferFactoryService.getDestinationService(destinationCommand)
-
-			transferSourceService.read().collect { sourceReader ->
-				// Wait if the process buffer is full.
-				waitForProcess(processBuffer, transferCommand.parallelism)
-				// Launch a new process.
-				processBuffer += launch(Dispatchers.IO) {
-					buildJob(transferCommand.bufferSize, transferDestinationService, sourceReader)
-				}
-			}
-
-			// Wait on the remaining jobs.
-			for (job in processBuffer) {
-				job.join()
-			}
-		}
-	}
-
-	override fun run(args: Array<String>) {
+	override fun run(args: Array<String>): Int {
 		logger.info { "Starting Multi-Transfer." }
 
 		val splitCommand = SplitCommand()
@@ -134,25 +50,23 @@ class StartupServiceImpl(private val fileSplitterService: FileSplitterService,
 		transferSourceCommands.forEach { transferCommandLine.addSubcommand(it) }
 		transferDestinationCommands.forEach { transferCommandLine.addSubcommand(it) }
 
-		val returnCode = CommandLine(MainCommand())
+		var returnCode = CommandLine(MainCommand())
 			.setExecutionStrategy(CommandLine.RunAll())
 			.addSubcommand(splitCommand)
 			.addSubcommand(combineCommand)
 			.addSubcommand(transferCommandLine)
 			.execute(*args)
 
-		if (returnCode != 0) {
-			exitProcess(returnCode)
+		if (returnCode == 0) {
+			if (splitCommand.called) {
+				runSplit(splitCommand)
+			} else if (combineCommand.called) {
+				runCombine(combineCommand)
+			} else if (transferCommand.called) {
+				returnCode = runTransfer(transferCommand, transferSourceCommands, transferDestinationCommands)
+			}
 		}
 
-		if (splitCommand.called) {
-			runSplit(splitCommand)
-		}
-		else if (combineCommand.called) {
-			runCombine(combineCommand)
-		}
-		else if (transferCommand.called) {
-			runTransfer(transferCommand, transferSourceCommands, transferDestinationCommands)
-		}
+		return returnCode
 	}
 }

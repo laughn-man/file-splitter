@@ -27,9 +27,29 @@ class SplitCommand : AbstractCommand() {
 	@Option(names = ["-d", "--delete-original"], description = ["Deletes the source file after a successful split."])
 	var deleteOriginal = false
 
-		override fun toString(): String {
+	override fun toString(): String {
 		return "SplitCommand(path=$path, chunkSize=$chunkSize, deleteOriginal=$deleteOriginal)"
 	}
 
+	override fun equals(other: Any?): Boolean {
+		if (this === other) return true
+		if (javaClass != other?.javaClass) return false
+		if (!super.equals(other)) return false
 
+		other as SplitCommand
+
+		if (path != other.path) return false
+		if (chunkSize != other.chunkSize) return false
+		if (deleteOriginal != other.deleteOriginal) return false
+
+		return true
+	}
+
+	override fun hashCode(): Int {
+		var result = super.hashCode()
+		result = 31 * result + path.hashCode()
+		result = 31 * result + chunkSize.hashCode()
+		result = 31 * result + deleteOriginal.hashCode()
+		return result
+	}
 }

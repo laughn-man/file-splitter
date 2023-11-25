@@ -1,8 +1,6 @@
-package org.laughnman.multitransfer.services
+package org.laughnman.multitransfer.services.transfer
 
 import org.laughnman.multitransfer.models.AbstractCommand
-import org.laughnman.multitransfer.services.transfer.TransferDestinationService
-import org.laughnman.multitransfer.services.transfer.TransferSourceService
 
 interface TransferFactoryService {
 
