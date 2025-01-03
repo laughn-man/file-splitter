@@ -1,5 +1,6 @@
 package org.laughnman.multitransfer.services.transfer
 
+import io.ktor.utils.io.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import org.laughnman.multitransfer.dao.ArtifactoryDao

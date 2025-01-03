@@ -2,7 +2,7 @@ package org.laughnman.multitransfer.services.transfer
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.laughnman.multitransfer.dao.FileDao
 import org.laughnman.multitransfer.models.transfer.FileDestinationCommand
 import org.laughnman.multitransfer.models.transfer.BufferReady

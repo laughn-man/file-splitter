@@ -1,7 +1,7 @@
 package org.laughnman.multitransfer.services.transfer
 
 import kotlinx.coroutines.*
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.laughnman.multitransfer.models.AbstractCommand
 import org.laughnman.multitransfer.models.ChunkSize
 import org.laughnman.multitransfer.models.TransferCommand

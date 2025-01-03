@@ -1,6 +1,6 @@
 package org.laughnman.multitransfer.dao
 
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.laughnman.multitransfer.models.s3.S3Url
 import software.amazon.awssdk.core.ResponseInputStream
 import software.amazon.awssdk.core.async.AsyncRequestBody

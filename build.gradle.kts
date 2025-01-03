@@ -1,30 +1,30 @@
 
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
 plugins {
-	kotlin("jvm") version "1.9.10"
-	id("com.github.johnrengelman.shadow") version "7.1.2"
+	kotlin("jvm") version "2.0.21"
+	id("com.gradleup.shadow") version "8.3.5"
 }
 
 group = "org.laughnman"
-version = "0.3.4"
+version = "0.3.5"
 
-val koinVersion = "3.4.3"
+val koinVersion = "4.0.1"
 val kotestVersion = "5.7.2"
-val ktorVersion = "2.3.4"
-val awsVersion = "2.20.143"
+val ktorVersion = "3.0.3"
+val awsVersion = "2.29.44"
 
 repositories {
 	mavenCentral()
 }
 
 dependencies {
-	implementation(kotlin("stdlib"))
-	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.7.3")
+	//implementation(kotlin("stdlib"))
+	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
 
 	implementation("io.insert-koin:koin-core:$koinVersion")
-	implementation("info.picocli:picocli:4.7.5")
+	implementation("info.picocli:picocli:4.7.6")
 
 	implementation("io.ktor:ktor-client-cio:$ktorVersion")
 	implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
@@ -34,25 +34,27 @@ dependencies {
 	implementation("software.amazon.awssdk:netty-nio-client:$awsVersion")
 
 	// Do not upgrade to 1.4, it does not support Java 8.
-	implementation("ch.qos.logback:logback-classic:1.3.11")
-	implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
+	implementation("ch.qos.logback:logback-classic:1.5.15")
+	implementation("io.github.oshai:kotlin-logging-jvm:7.0.3")
 
 	testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion")
 	testImplementation("io.kotest:kotest-framework-datatest:$kotestVersion")
-	testImplementation("io.mockk:mockk:1.13.7")
+	testImplementation("io.mockk:mockk:1.13.14")
+}
+
+kotlin {
+	compilerOptions {
+		jvmTarget.set(JvmTarget.JVM_1_8)
+	}
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_1_8
+	targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 
 tasks {
-	// Enforce 1.8 on both the main and test compiles.
-	withType<KotlinCompile>().configureEach {
-		kotlinOptions.jvmTarget = "1.8"
-	}
-	withType<JavaCompile>().configureEach {
-		sourceCompatibility = "1.8"
-		targetCompatibility = "1.8"
-	}
-
 	shadowJar {
 		archiveClassifier.set("")
 		archiveVersion.set("")
@@ -63,12 +65,15 @@ tasks {
 				"Version" to project.version
 			))
 		}
+
+		dependsOn("createProperties")
 	}
 
-	// Create a createProperties take that will create a properties file in the resources folder.
+	// Create a createProperties task that will create a properties file in the resources folder.
 	register("createProperties") {
 		doLast {
-			val resourcesDir = File("$buildDir/resources/main")
+			val resourcesDir = File("${layout.buildDirectory.get()}/resources/main")
+			println(resourcesDir)
 			resourcesDir.mkdirs()
 
 			File(resourcesDir, "multi-transfer.properties").outputStream().use {fout ->
@@ -77,11 +82,6 @@ tasks {
 				p.store(fout, null)
 			}
 		}
-	}
-
-	// Have the classes task depend on createProperties.
-	classes {
-		dependsOn("createProperties")
 	}
 
 	// Have build dependon shadowJar.

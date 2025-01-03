@@ -1,7 +1,7 @@
 package org.laughnman.multitransfer.services.transfer
 
 import kotlinx.coroutines.future.await
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.laughnman.multitransfer.dao.S3Dao
 import org.laughnman.multitransfer.models.s3.S3Url
 import org.laughnman.multitransfer.models.transfer.*

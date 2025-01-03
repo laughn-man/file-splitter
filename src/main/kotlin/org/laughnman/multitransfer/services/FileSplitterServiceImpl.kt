@@ -1,6 +1,6 @@
 package org.laughnman.multitransfer.services
 
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.laughnman.multitransfer.dao.FileDao
 import org.laughnman.multitransfer.models.ChunkSize
 import org.laughnman.multitransfer.models.CombineCommand

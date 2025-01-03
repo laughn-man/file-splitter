@@ -1,6 +1,6 @@
 package org.laughnman.multitransfer.utilities
 
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.DurationUnit
