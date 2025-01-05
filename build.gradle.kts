@@ -34,7 +34,7 @@ dependencies {
 	implementation("software.amazon.awssdk:netty-nio-client:$awsVersion")
 
 	// Do not upgrade to 1.4, it does not support Java 8.
-	implementation("ch.qos.logback:logback-classic:1.5.15")
+	implementation("ch.qos.logback:logback-classic:1.3.15")
 	implementation("io.github.oshai:kotlin-logging-jvm:7.0.3")
 
 	testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion")
