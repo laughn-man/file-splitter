@@ -7,7 +7,7 @@ import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.jackson.*
 import io.ktor.utils.io.*
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.laughnman.multitransfer.models.artifactory.FileInfo
 import org.laughnman.multitransfer.models.artifactory.FolderInfo
 import org.laughnman.multitransfer.models.transfer.AbstractArtifactoryCommand

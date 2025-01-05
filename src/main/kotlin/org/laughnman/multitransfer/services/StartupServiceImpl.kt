@@ -1,6 +1,6 @@
 package org.laughnman.multitransfer.services
 
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.laughnman.multitransfer.models.*
 import org.laughnman.multitransfer.models.transfer.*
 import org.laughnman.multitransfer.services.transfer.TransferService
